@@ -49,7 +49,8 @@ export function Card({
   children,
   className,
   accentKey,
-  headerImageSrc
+  headerImageSrc,
+  frameVariant = "default"
 }: {
   themeMode: ThemeMode;
   title: string;
@@ -58,9 +59,12 @@ export function Card({
   className?: string;
   accentKey?: DashboardNavKey | "alerts" | "success" | "energy";
   headerImageSrc?: string;
+  /** Match main app shell (navbar / sidebar): gold frame, full opacity, extra padding. */
+  frameVariant?: "default" | "shell";
 }) {
   const t = themeAccent(themeMode);
   const a = accentKey ? accentByKey(accentKey) : null;
+  const shell = frameVariant === "shell";
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -68,24 +72,49 @@ export function Card({
       transition={{ duration: 0.22, ease: "easeOut" }}
       whileHover={{ y: -2 }}
       className={cn(
-        "dashboard-card cyber-corners group relative overflow-hidden border p-4 transition",
-        "bg-[rgba(10,10,10,0.70)] backdrop-blur-[12px]",
-        "opacity-70 hover:opacity-100",
+        "dashboard-card cyber-corners group relative overflow-hidden border transition",
+        shell
+          ? "cut-frame cyber-frame gold-stroke w-full max-w-none border-[rgba(197,179,88,0.28)] bg-[#060606]/82 p-5 opacity-100 backdrop-blur-[12px] sm:p-6 md:p-7 lg:p-8"
+          : "bg-[rgba(10,10,10,0.70)] p-4 opacity-70 backdrop-blur-[12px] hover:opacity-100",
         className
       )}
-      style={{
-        borderColor: a?.border ?? t.border,
-        ["--card-accent-border" as any]: a?.border ?? t.border,
-        ["--card-accent-glow" as any]: a?.glow ?? t.glow
-      }}
+      style={
+        shell
+          ? {
+              borderColor: "rgba(197,179,88,0.32)",
+              boxShadow:
+                "0 0 0 1px rgba(197,179,88,0.08), 0 0 72px rgba(197,179,88,0.09), inset 0 1px 0 rgba(197,179,88,0.06)",
+              ["--card-accent-border" as any]: a?.border ?? t.border,
+              ["--card-accent-glow" as any]: a?.glow ?? t.glow
+            }
+          : {
+              borderColor: a?.border ?? t.border,
+              ["--card-accent-border" as any]: a?.border ?? t.border,
+              ["--card-accent-glow" as any]: a?.glow ?? t.glow
+            }
+      }
     >
-      <div className="pointer-events-none absolute inset-0 opacity-80 [background:radial-gradient(760px_280px_at_18%_0%,rgba(255,215,0,0.16),rgba(0,0,0,0)_64%)]" />
-      <div className="pointer-events-none absolute inset-0 opacity-40 [background:radial-gradient(720px_280px_at_88%_0%,rgba(196,126,255,0.14),rgba(0,0,0,0)_62%)]" />
-      <div className="pointer-events-none absolute inset-0 opacity-35 [background:repeating-linear-gradient(0deg,rgba(255,255,255,0.02)_0px,rgba(255,255,255,0.02)_1px,transparent_7px,transparent_14px)]" />
-      <div className="pointer-events-none absolute inset-0 opacity-0 transition duration-300 group-hover:opacity-100 [background:linear-gradient(135deg,rgba(255,215,0,0.10),rgba(0,255,255,0.06),rgba(0,0,0,0)_60%)]" />
+      {shell ? (
+        <>
+          <div className="pointer-events-none absolute inset-0 opacity-[0.9] [background:radial-gradient(920px_520px_at_22%_0%,rgba(197,179,88,0.13),rgba(0,0,0,0)_58%)]" />
+          <div className="pointer-events-none absolute inset-0 opacity-[0.35] [background:radial-gradient(640px_400px_at_92%_12%,rgba(197,179,88,0.06),rgba(0,0,0,0)_55%)]" />
+        </>
+      ) : (
+        <>
+          <div className="pointer-events-none absolute inset-0 opacity-80 [background:radial-gradient(760px_280px_at_18%_0%,rgba(255,215,0,0.16),rgba(0,0,0,0)_64%)]" />
+          <div className="pointer-events-none absolute inset-0 opacity-40 [background:radial-gradient(720px_280px_at_88%_0%,rgba(196,126,255,0.14),rgba(0,0,0,0)_62%)]" />
+          <div className="pointer-events-none absolute inset-0 opacity-35 [background:repeating-linear-gradient(0deg,rgba(255,255,255,0.02)_0px,rgba(255,255,255,0.02)_1px,transparent_7px,transparent_14px)]" />
+          <div className="pointer-events-none absolute inset-0 opacity-0 transition duration-300 group-hover:opacity-100 [background:linear-gradient(135deg,rgba(255,215,0,0.10),rgba(0,255,255,0.06),rgba(0,0,0,0)_60%)]" />
+        </>
+      )}
 
       <div className="relative flex items-center justify-between gap-3">
-        <div className="font-mono text-[12px] font-extrabold uppercase tracking-[0.2em] text-white/88 group-hover:text-white/95">
+        <div
+          className={cn(
+            "font-mono font-extrabold uppercase tracking-[0.2em] text-white/88 group-hover:text-white/95",
+            shell ? "text-[13px] sm:text-[14px] md:text-[15px]" : "text-[12px]"
+          )}
+        >
           {title}
         </div>
         {right}
@@ -104,26 +133,48 @@ export function Card({
           <div className="pointer-events-none absolute inset-0" style={{ boxShadow: `inset 0 0 0 1px ${(a?.border ?? t.border)}` }} />
         </div>
       ) : null}
-      <div className="relative mt-3">{children}</div>
+      <div className={cn("relative", shell ? "mt-4 md:mt-5" : "mt-3")}>{children}</div>
     </motion.div>
   );
 }
 
-export function ProgressBar({ pct, tone }: { pct: number; tone: "gold" | "ice" | "danger" }) {
-  const bg =
+export type ProgressBarTone = "gold" | "ice" | "danger" | "neonGreen" | "ember";
+
+export function ProgressBar({ pct, tone }: { pct: number; tone: ProgressBarTone }) {
+  const clamped = Math.max(0, Math.min(100, pct));
+  const { bg, glow } =
     tone === "danger"
-      ? "linear-gradient(90deg, rgba(255,59,59,0.95), rgba(255,165,0,0.90))"
+      ? {
+          bg: "linear-gradient(90deg, rgba(255,43,43,0.98), rgba(255,94,94,0.92))",
+          glow: "0 0 16px rgba(255,55,55,0.45)"
+        }
       : tone === "ice"
-        ? "linear-gradient(90deg, rgba(0,255,255,0.85), rgba(196,126,255,0.85))"
-        : "linear-gradient(90deg, rgba(255,215,0,0.95), rgba(255,165,0,0.85))";
+        ? {
+            bg: "linear-gradient(90deg, rgba(0,255,255,0.85), rgba(196,126,255,0.85))",
+            glow: "0 0 18px rgba(0,255,255,0.22)"
+          }
+        : tone === "neonGreen"
+          ? {
+              bg: "linear-gradient(90deg, rgba(57,255,20,0.95), rgba(0,220,130,0.88))",
+              glow: "0 0 20px rgba(57,255,20,0.42)"
+            }
+          : tone === "ember"
+            ? {
+                bg: "linear-gradient(90deg, rgba(180,110,55,0.95), rgba(255,180,90,0.82))",
+                glow: "0 0 14px rgba(255,160,80,0.28)"
+              }
+            : {
+                bg: "linear-gradient(90deg, rgba(255,215,0,0.95), rgba(255,165,0,0.85))",
+                glow: "0 0 18px rgba(255,215,0,0.18)"
+              };
   return (
-    <div className="h-2.5 w-full overflow-hidden rounded-full border border-white/15 bg-black/55">
+    <div className="h-3 w-full overflow-hidden rounded-full border border-[#3d2e22]/80 bg-[#0f0a07]/90">
       <motion.div
         className="h-full rounded-full"
         initial={{ width: 0 }}
-        animate={{ width: `${Math.max(0, Math.min(100, pct))}%` }}
-        transition={{ duration: 0.5, ease: "easeOut" }}
-        style={{ background: bg, boxShadow: "0 0 18px rgba(255,215,0,0.18)" }}
+        animate={{ width: `${clamped}%` }}
+        transition={{ duration: 0.55, ease: "easeOut" }}
+        style={{ background: bg, boxShadow: glow }}
       />
     </div>
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
 import gsap from "gsap";
 import { AnimatePresence, motion } from "framer-motion";
 import ChromaGrid, { type ChromaItem } from "../components/ChromaGrid";
@@ -30,6 +30,26 @@ type MonkChallenge = {
   duration: string;
 };
 type ThemeMode = "default" | "danger" | "cyberpunk";
+
+type FeatureMenuEntry =
+  | { type: "nav"; section: string; label: string; navKey: string }
+  | { type: "theme"; section: string; label: string; mode: ThemeMode };
+
+const FEATURE_MENU_ENTRIES: FeatureMenuEntry[] = [
+  { type: "nav", section: "Website features", label: "Dashboard overview", navKey: "dashboard" },
+  { type: "nav", section: "Website features", label: "Programs & courses", navKey: "programs" },
+  { type: "nav", section: "Website features", label: "Syndicate Mode", navKey: "monk" },
+  { type: "nav", section: "Website features", label: "Membership section", navKey: "resources" },
+  { type: "nav", section: "Website features", label: "Affiliate portal", navKey: "affiliate" },
+  { type: "nav", section: "More options", label: "Support", navKey: "support" },
+  { type: "nav", section: "More options", label: "Settings", navKey: "settings" },
+  { type: "theme", section: "Appearance", label: "Default theme", mode: "default" },
+  { type: "theme", section: "Appearance", label: "Danger theme", mode: "danger" },
+  { type: "theme", section: "Appearance", label: "Cyberpunk theme", mode: "cyberpunk" }
+];
+
+const PROFILE_AVATAR_STORAGE_KEY = "dashboarded:profileAvatar";
+const PROFILE_AVATAR_MAX_BYTES = Math.floor(1.5 * 1024 * 1024);
 
 function cn(...parts: Array<string | false | null | undefined>) {
   return parts.filter(Boolean).join(" ");
@@ -1161,28 +1181,60 @@ function UserDashboardGate({
   );
 }
 
+type InstructorSlide = {
+  src: string;
+  programName: string;
+  instructorName: string;
+  description: string;
+};
+
 function InstructorSlideshow() {
   const wrapRef = useRef<HTMLDivElement | null>(null);
   const [idx, setIdx] = useState(0);
   const prevIdxRef = useRef(0);
-  const images = useMemo(
+  const slides = useMemo<InstructorSlide[]>(
     () => [
-      "/assets/instructor-images/a.jpg",
-      "/assets/instructor-images/b.png",
-      "/assets/instructor-images/c.png",
-      "/assets/instructor-images/d.png"
+      {
+        src: "/assets/instructor-images/a.jpg",
+        programName: "Shadow Doctrine",
+        instructorName: "Director Kade",
+        description:
+          "Covert workflow design, operational security, and high-stakes delivery under pressure. Build the instincts to run programs like classified briefings—clear lanes, tight feedback, zero noise."
+      },
+      {
+        src: "/assets/instructor-images/b.png",
+        programName: "Signal Architecture",
+        instructorName: "Elena Voss",
+        description:
+          "Systems thinking for distributed teams: telemetry, comms cadence, and decision trees that scale. Learn to wire programs so every stakeholder sees the same truth at the same time."
+      },
+      {
+        src: "/assets/instructor-images/c.png",
+        programName: "Neural Forge Lab",
+        instructorName: "Dr. Aris Okonkwo",
+        description:
+          "Rapid prototyping with AI copilots without losing craft. From prompt discipline to review gates—ship faster while keeping quality bars that survive real users and real load."
+      },
+      {
+        src: "/assets/instructor-images/d.png",
+        programName: "Citadel Leadership",
+        instructorName: "Morgan Reyes",
+        description:
+          "Command presence for technical leads: delegation, conflict de-escalation, and narrative control in the room. Turn scattered squads into a single synchronized strike team."
+      }
     ],
     []
   );
 
+  const active = slides[idx] ?? slides[0];
+
   useLayoutEffect(() => {
     if (!wrapRef.current) return;
     const el = wrapRef.current;
-    const slides = Array.from(el.querySelectorAll<HTMLElement>("[data-slide]"));
-    if (slides.length === 0) return;
+    const slideEls = Array.from(el.querySelectorAll<HTMLElement>("[data-slide]"));
+    if (slideEls.length === 0) return;
 
-    // Initial state for all slides (only current visible)
-    slides.forEach((s, i) => {
+    slideEls.forEach((s, i) => {
       gsap.set(s, {
         opacity: i === idx ? 1 : 0,
         x: i === idx ? 0 : 16,
@@ -1195,18 +1247,17 @@ function InstructorSlideshow() {
   useLayoutEffect(() => {
     if (!wrapRef.current) return;
     const el = wrapRef.current;
-    const slides = Array.from(el.querySelectorAll<HTMLElement>("[data-slide]"));
-    if (slides.length < 2) return;
+    const slideEls = Array.from(el.querySelectorAll<HTMLElement>("[data-slide]"));
+    if (slideEls.length < 2) return;
 
     const prev = prevIdxRef.current;
     if (prev === idx) return;
     prevIdxRef.current = idx;
 
-    const outEl = slides[prev];
-    const inEl = slides[idx];
+    const outEl = slideEls[prev];
+    const inEl = slideEls[idx];
     if (!outEl || !inEl) return;
 
-    // Slower, smoother "cinematic" crossfade
     const tl = gsap.timeline({ defaults: { ease: "power4.out" } });
     tl.set(inEl, { opacity: 0, x: 22, scale: 1.035, filter: "brightness(0.90)" }, 0)
       .to(outEl, { opacity: 0, x: -22, scale: 1.02, duration: 1.05 }, 0)
@@ -1214,69 +1265,94 @@ function InstructorSlideshow() {
   }, [idx]);
 
   useLayoutEffect(() => {
-    // Give each image time to "sit" before transitioning
-    const t = window.setInterval(() => setIdx((v) => (v + 1) % images.length), 4200);
+    const t = window.setInterval(() => setIdx((v) => (v + 1) % slides.length), 4200);
     return () => window.clearInterval(t);
-  }, [images.length]);
+  }, [slides.length]);
 
   return (
     <div
       ref={wrapRef}
       data-anim="in"
-      className="cut-frame cyber-frame gold-stroke glass-dark hero-gold-frame hero-pulse-soft relative overflow-hidden p-4"
+      className="cut-frame cyber-frame gold-stroke glass-dark hero-gold-frame hero-pulse-soft relative overflow-hidden p-4 sm:p-5"
     >
       <div className="hero-gold-overlay absolute inset-0 opacity-70" />
-      <div className="relative flex items-center justify-between gap-4">
-        <div>
-          <div className="text-[13px] font-extrabold uppercase tracking-[0.22em] text-white/60">Instructors</div>
-          <div className="mt-2 text-[16px] font-black uppercase tracking-[0.14em] text-[color:var(--gold)]/90">
-            Rotating Intel Feed
+      <div className="relative grid grid-cols-1 gap-6 lg:grid-cols-2 lg:gap-8 lg:items-center">
+        <div className="flex min-w-0 flex-col gap-5">
+          <div>
+            <div className="text-[13px] font-extrabold uppercase tracking-[0.22em] text-white/60">Instructors</div>
+            <div className="mt-2 text-[16px] font-black uppercase tracking-[0.14em] text-[color:var(--gold)]/90 sm:text-[17px]">
+              Rotating Intel Feed
+            </div>
+          </div>
+
+          <div
+            className="space-y-4 border-t border-[rgba(197,179,88,0.18)] pt-5"
+            aria-live="polite"
+            aria-atomic="true"
+          >
+            <div>
+              <div className="text-[10px] font-black uppercase tracking-[0.2em] text-white/45">Program</div>
+              <div className="mt-1.5 text-[18px] font-black uppercase leading-snug tracking-[0.08em] text-[color:var(--gold)]/95 sm:text-[20px]">
+                {active.programName}
+              </div>
+            </div>
+            <div>
+              <div className="text-[10px] font-black uppercase tracking-[0.2em] text-white/45">Instructor</div>
+              <div className="mt-1.5 text-[14px] font-extrabold uppercase tracking-[0.12em] text-white/88 sm:text-[15px]">
+                {active.instructorName}
+              </div>
+            </div>
+            <p className="text-[12px] leading-relaxed text-white/68 sm:text-[13px]">{active.description}</p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2 pt-1" role="tablist" aria-label="Instructor slides">
+            {slides.map((_, i) => (
+              <button
+                key={i}
+                type="button"
+                role="tab"
+                aria-selected={i === idx}
+                aria-label={`Slide ${i + 1}`}
+                onClick={() => setIdx(i)}
+                className={cn(
+                  "h-[10px] w-[10px] rounded-[3px] border transition hover:border-white/25",
+                  i === idx
+                    ? "border-[rgba(197,179,88,0.55)] bg-[rgba(197,179,88,0.18)] glow-edge"
+                    : "border-white/10 bg-black/30"
+                )}
+              />
+            ))}
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          {images.map((_, i) => (
-            <span
-              key={i}
-              className={cn(
-                "h-[10px] w-[10px] rounded-[3px] border",
-                i === idx
-                  ? "border-[rgba(197,179,88,0.55)] bg-[rgba(197,179,88,0.18)] glow-edge"
-                  : "border-white/10 bg-black/30"
-              )}
-            />
+
+        <div className="relative min-h-[260px] w-full overflow-hidden rounded-lg border border-white/10 bg-black/80 sm:min-h-[300px] md:min-h-[340px] lg:min-h-[360px]">
+          <div className="absolute inset-0 opacity-85 [background:linear-gradient(180deg,rgba(0,0,0,0.35),rgba(0,0,0,0.55))]" />
+          {slides.map((slide, i) => (
+            <div
+              key={slide.src}
+              data-slide
+              className="absolute inset-0 will-change-transform"
+              style={{ opacity: i === idx ? 1 : 0 }}
+            >
+              <img
+                src={slide.src}
+                alt=""
+                className="absolute inset-0 h-full w-full object-cover opacity-30 blur-[10px] scale-[1.08]"
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).style.display = "none";
+                }}
+              />
+              <img
+                src={slide.src}
+                alt={`${slide.instructorName} — ${slide.programName}`}
+                className="absolute inset-0 h-full w-full object-contain"
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).style.display = "none";
+                }}
+              />
+            </div>
           ))}
         </div>
-      </div>
-
-      <div className="relative mt-4 h-[320px] w-full overflow-hidden rounded-lg border border-white/10 bg-black/80 md:h-[360px]">
-        <div className="absolute inset-0 opacity-85 [background:linear-gradient(90deg,rgba(0,0,0,0.82),rgba(0,0,0,0.18),rgba(0,0,0,0.82))]" />
-        {images.map((src, i) => (
-          <div
-            key={src}
-            data-slide
-            className="absolute inset-0 will-change-transform"
-            style={{ opacity: i === idx ? 1 : 0 }}
-          >
-            {/* Backdrop blur (fills container) */}
-            <img
-              src={src}
-              alt=""
-              className="absolute inset-0 h-full w-full object-cover opacity-30 blur-[10px] scale-[1.08]"
-              onError={(e) => {
-                (e.currentTarget as HTMLImageElement).style.display = "none";
-              }}
-            />
-            {/* Foreground: full image visible (no crop) */}
-            <img
-              src={src}
-              alt=""
-              className="absolute inset-0 h-full w-full object-contain"
-              onError={(e) => {
-                (e.currentTarget as HTMLImageElement).style.display = "none";
-              }}
-            />
-          </div>
-        ))}
       </div>
     </div>
   );
@@ -1292,19 +1368,22 @@ export default function Page() {
   const navGlitchTimersRef = useRef(new Map<HTMLElement, number>());
   const profileBtnRef = useRef<HTMLButtonElement | null>(null);
   const profilePanelRef = useRef<HTMLDivElement | null>(null);
+  const profileAvatarInputRef = useRef<HTMLInputElement | null>(null);
   const logoWrapRef = useRef<HTMLDivElement | null>(null);
   const sidebarRef = useRef<HTMLElement | null>(null);
   const topDockRef = useRef<HTMLDivElement | null>(null);
   const dockMouseY = useRef<number>(Infinity);
   const topMouseX = useRef<number>(Infinity);
   const topbarRef = useRef<HTMLDivElement | null>(null);
+  const featuresSearchBtnRef = useRef<HTMLButtonElement | null>(null);
+  const featuresMenuPanelRef = useRef<HTMLDivElement | null>(null);
 
   const nav: NavItem[] = useMemo(
     () => [
       { key: "dashboard", label: "Dashboard", active: true },
       { key: "programs", label: "Programs" },
       { key: "monk", label: "Syndicate Mode" },
-      { key: "resources", label: "Resources" },
+      { key: "resources", label: "Membership section" },
       { key: "affiliate", label: "Affiliate Portal" },
       { key: "support", label: "Support" },
       { key: "settings", label: "Settings" }
@@ -1317,7 +1396,88 @@ export default function Page() {
   const [profileOpen, setProfileOpen] = useState(false);
   const [profileAvatar, setProfileAvatar] = useState<string>("/assets/a.webp");
   const profileName = "Subhan";
+
+  const persistProfileAvatar = useCallback((src: string) => {
+    setProfileAvatar(src);
+    try {
+      window.localStorage.setItem(PROFILE_AVATAR_STORAGE_KEY, src);
+    } catch {
+      if (src.startsWith("data:")) {
+        window.alert("Could not save this image (browser storage may be full). It may disappear after you reload.");
+      }
+    }
+  }, []);
+
+  const onProfileAvatarFile = useCallback(
+    (e: ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      e.target.value = "";
+      if (!file) return;
+      if (!file.type.startsWith("image/")) return;
+      if (file.size > PROFILE_AVATAR_MAX_BYTES) {
+        window.alert(`Choose an image under ${Math.round(PROFILE_AVATAR_MAX_BYTES / 1024 / 1024)} MB.`);
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = () => {
+        const dataUrl = reader.result;
+        if (typeof dataUrl !== "string") return;
+        persistProfileAvatar(dataUrl);
+      };
+      reader.readAsDataURL(file);
+    },
+    [persistProfileAvatar]
+  );
+
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem(PROFILE_AVATAR_STORAGE_KEY);
+      if (saved) setProfileAvatar(saved);
+    } catch {
+      /* ignore */
+    }
+  }, []);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [featuresMenuOpen, setFeaturesMenuOpen] = useState(false);
+  const [featureSearchQuery, setFeatureSearchQuery] = useState("");
+
+  const featureMenuGrouped = useMemo(() => {
+    const q = featureSearchQuery.trim().toLowerCase();
+    const list = q
+      ? FEATURE_MENU_ENTRIES.filter(
+          (e) => e.label.toLowerCase().includes(q) || e.section.toLowerCase().includes(q)
+        )
+      : FEATURE_MENU_ENTRIES;
+    const map = new Map<string, FeatureMenuEntry[]>();
+    for (const e of list) {
+      const arr = map.get(e.section) ?? [];
+      arr.push(e);
+      map.set(e.section, arr);
+    }
+    return Array.from(map.entries());
+  }, [featureSearchQuery]);
+
+  useEffect(() => {
+    if (!featuresMenuOpen) {
+      setFeatureSearchQuery("");
+      return;
+    }
+    const onDoc = (e: MouseEvent) => {
+      const t = e.target as Node;
+      if (featuresSearchBtnRef.current?.contains(t)) return;
+      if (featuresMenuPanelRef.current?.contains(t)) return;
+      setFeaturesMenuOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setFeaturesMenuOpen(false);
+    };
+    document.addEventListener("mousedown", onDoc);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDoc);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [featuresMenuOpen]);
 
   const courses: Course[] = useMemo(
     () => [
@@ -1820,7 +1980,7 @@ export default function Page() {
         </video>
       </div>
       <div className="hud-ambient-glow" aria-hidden="true" />
-      <div className="relative flex min-h-screen w-full flex-col px-2 pb-2 sm:px-3 md:px-4 md:pb-3 lg:h-full">
+      <div className="relative flex min-h-screen w-full max-w-[100vw] flex-col px-1.5 pb-2 sm:px-2 md:px-3 md:pb-3 lg:px-4 lg:h-full">
         {/* Top title bar */}
         <div
           ref={topbarRef}
@@ -1874,7 +2034,86 @@ export default function Page() {
             </div>
           </div>
           <div className="relative ml-auto flex items-center gap-2 sm:gap-3 max-sm:ml-0 max-sm:w-full max-sm:flex-col max-sm:items-stretch">
-            <div className="relative self-end">
+            <div className="relative self-end flex flex-wrap items-end justify-end gap-2 max-sm:w-full">
+              <div className="relative">
+                <button
+                  ref={featuresSearchBtnRef}
+                  type="button"
+                  onClick={() => setFeaturesMenuOpen((v) => !v)}
+                  className={cn(
+                    "cut-frame-sm cyber-frame gold-stroke hud-hover-glow grid h-9 w-9 place-items-center border border-[rgba(197,179,88,0.28)] bg-black/70 text-[color:var(--gold)]/90 sm:h-10 sm:w-10",
+                    featuresMenuOpen && "hud-selected-glow border-[rgba(255,215,0,0.55)]"
+                  )}
+                  aria-label="Search and site menu"
+                  aria-expanded={featuresMenuOpen}
+                  aria-haspopup="menu"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" className="h-[18px] w-[18px] sm:h-5 sm:w-5" aria-hidden="true">
+                    <path
+                      d="M10.5 18.2a7.7 7.7 0 1 1 0-15.4a7.7 7.7 0 0 1 0 15.4Z"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                    />
+                    <path d="M16.2 16.2L20.4 20.4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                  </svg>
+                </button>
+
+                {featuresMenuOpen ? (
+                  <div
+                    ref={featuresMenuPanelRef}
+                    className="cut-frame cyber-frame gold-stroke glass-dark premium-gold-border absolute right-0 top-[46px] z-50 w-[min(92vw,320px)] overflow-hidden p-3 sm:top-[50px] sm:p-4"
+                    role="menu"
+                  >
+                    <div className="absolute inset-0 opacity-70 [background:radial-gradient(520px_220px_at_20%_0%,rgba(197,179,88,0.12),rgba(0,0,0,0)_62%)]" />
+                    <div className="relative">
+                      <div className="text-[10px] font-extrabold uppercase tracking-[0.22em] text-white/50">Find & navigate</div>
+                      <input
+                        type="search"
+                        value={featureSearchQuery}
+                        onChange={(e) => setFeatureSearchQuery(e.target.value)}
+                        placeholder="Filter features…"
+                        className="mt-2 w-full rounded-md border border-white/12 bg-black/40 px-3 py-2 text-[12px] text-white/85 placeholder:text-white/35 outline-none focus:border-[rgba(255,215,0,0.45)]"
+                        autoFocus
+                      />
+                      <div className="mt-3 max-h-[min(52vh,360px)] space-y-4 overflow-y-auto pr-1 no-scrollbar">
+                        {featureMenuGrouped.length === 0 ? (
+                          <div className="text-[12px] text-white/50">No matches.</div>
+                        ) : (
+                          featureMenuGrouped.map(([section, entries]) => (
+                            <div key={section}>
+                              <div className="text-[9px] font-black uppercase tracking-[0.2em] text-white/40">{section}</div>
+                              <div className="mt-1.5 space-y-1">
+                                {entries.map((entry, i) => (
+                                  <button
+                                    key={`${section}-${entry.type}-${i}`}
+                                    type="button"
+                                    role="menuitem"
+                                    onClick={() => {
+                                      if (entry.type === "nav") {
+                                        setSelectedNavKey(entry.navKey);
+                                      } else {
+                                        setThemeMode(entry.mode);
+                                      }
+                                      setFeaturesMenuOpen(false);
+                                    }}
+                                    className={cn(
+                                      "flex w-full rounded-md border border-white/10 bg-black/30 px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-[0.1em] text-white/75 transition hover:border-[rgba(255,215,0,0.35)] hover:bg-black/50 hover:text-white/90",
+                                      entry.type === "theme" && themeMode === entry.mode && "border-[rgba(255,215,0,0.45)] text-[color:var(--gold)]/95"
+                                    )}
+                                  >
+                                    {entry.label}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+
               {/* Profile / Avatar button */}
               <div className="relative">
                 <button
@@ -1924,9 +2163,19 @@ export default function Page() {
                           Choose Avatar
                         </div>
                         <div className="text-[10px] font-extrabold uppercase tracking-[0.22em] text-white/40">
-                          a.webp → f.webp
+                          Presets · upload
                         </div>
                       </div>
+
+                      <input
+                        ref={profileAvatarInputRef}
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
+                        className="sr-only"
+                        tabIndex={-1}
+                        aria-hidden
+                        onChange={onProfileAvatarFile}
+                      />
 
                       <div className="mt-4 grid grid-cols-3 gap-3">
                         {["a", "b", "c", "d", "e", "f"].map((k) => {
@@ -1936,7 +2185,7 @@ export default function Page() {
                             <button
                               key={k}
                               type="button"
-                              onClick={() => setProfileAvatar(src)}
+                              onClick={() => persistProfileAvatar(src)}
                               className={cn(
                                 "cut-frame-sm cyber-frame gold-stroke hud-hover-glow glass-dark premium-gold-border relative aspect-square overflow-hidden transition",
                                 "hover:border-[rgba(255,215,0,0.62)]",
@@ -1962,12 +2211,20 @@ export default function Page() {
                         })}
                       </div>
 
+                      {profileAvatar.startsWith("data:") ? (
+                        <div className="mt-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-[rgba(0,255,255,0.55)">
+                          Custom photo from your device
+                        </div>
+                      ) : null}
+
                       <div className="mt-4 flex items-center justify-between gap-3">
                         <button
                           type="button"
+                          onClick={() => profileAvatarInputRef.current?.click()}
+                          aria-label="Upload profile picture from your device"
                           className="cut-frame-sm cyber-frame gold-stroke hud-hover-glow glass-dark premium-gold-border premium-button inline-flex items-center justify-center px-4 py-3 text-[11px] font-black uppercase tracking-[0.22em] text-[color:var(--gold)]/92 transition hover:border-[rgba(255,215,0,0.62)] hover:text-[rgba(255,215,0,0.95)]"
                         >
-                          Change Image
+                          Upload from PC
                         </button>
                         <button
                           type="button"
@@ -1981,30 +2238,11 @@ export default function Page() {
                 ) : null}
               </div>
             </div>
-            <div className="cut-frame-sm border border-white/15 bg-black/45 p-1 max-sm:mt-2">
-              <div className="flex items-center gap-1">
-                {(["default", "danger", "cyberpunk"] as const).map((m) => (
-                  <button
-                    key={m}
-                    type="button"
-                    onClick={() => setThemeMode(m)}
-                    className={cn(
-                      "rounded-md px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.14em] transition",
-                      themeMode === m
-                        ? "bg-white/90 text-black"
-                        : "text-white/65 hover:text-white"
-                    )}
-                  >
-                    {m}
-                  </button>
-                ))}
-              </div>
-            </div>
           </div>
         </div>
 
         {/* Main frame */}
-        <div className="mt-0 grid min-h-0 flex-1 grid-cols-12 gap-2 pt-2 sm:gap-3 sm:pt-3 md:gap-4">
+        <div className="mt-0 grid min-h-0 w-full max-w-none flex-1 grid-cols-12 gap-2 pt-2 sm:gap-2.5 sm:pt-3 md:gap-3 lg:gap-4">
           {/* Sidebar */}
           {sidebarOpen ? (
             <aside
@@ -2017,7 +2255,7 @@ export default function Page() {
                 dockMouseY.current = Infinity;
               }}
               className={cn(
-                "cut-frame cyber-frame gold-stroke relative col-span-12 overflow-hidden border border-[rgba(197,179,88,0.22)] bg-[#060606]/70 p-2.5 sm:p-3 md:col-span-3 lg:col-span-2",
+                "cut-frame cyber-frame gold-stroke relative col-span-12 overflow-hidden border border-[rgba(197,179,88,0.22)] bg-[#060606]/70 p-2.5 sm:p-3 md:col-span-2 lg:col-span-2",
                 "h-auto max-h-none overflow-visible lg:sticky lg:top-0 lg:h-full lg:max-h-none lg:overflow-auto no-scrollbar"
               )}
             >
@@ -2061,8 +2299,8 @@ export default function Page() {
           <section
             data-anim="in"
             className={cn(
-              "cut-frame cyber-frame gold-stroke relative col-span-12 min-h-0 overflow-hidden border border-[rgba(197,179,88,0.22)] bg-[#060606]/70 p-3 sm:p-4 md:p-5",
-              sidebarOpen ? "md:col-span-9 lg:col-span-10" : "md:col-span-12 lg:col-span-12",
+              "cut-frame cyber-frame gold-stroke relative col-span-12 min-h-0 w-full max-w-none overflow-hidden border border-[rgba(197,179,88,0.22)] bg-[#060606]/70 p-4 sm:p-5 md:p-6 lg:p-7",
+              sidebarOpen ? "md:col-span-10 lg:col-span-10" : "md:col-span-12 lg:col-span-12",
               "flex flex-col"
             )}
           >
@@ -2088,13 +2326,18 @@ export default function Page() {
                     </div>
                   </div>
                   <div className="pr-1" data-cards-wrap>
-                    <div className={cn("relative", sidebarOpen ? "min-h-[420px] sm:min-h-[520px]" : "min-h-[500px] sm:min-h-[620px]")}>
+                    <div
+                      className={cn(
+                        "relative",
+                        sidebarOpen ? "min-h-[min(52vh,560px)] sm:min-h-[min(58vh,640px)]" : "min-h-[min(56vh,620px)] sm:min-h-[min(64vh,720px)]"
+                      )}
+                    >
                       <ChromaGrid
                         items={chromaItems}
                         selectedId={selectedCourseId}
                         onSelect={(id) => setSelectedCourseId(id)}
-                        columns={sidebarOpen ? 2 : 3}
-                        radius={sidebarOpen ? 340 : 420}
+                        columns={sidebarOpen ? 3 : 4}
+                        radius={sidebarOpen ? 380 : 440}
                         damping={0.45}
                         fadeOut={0.6}
                         ease="power3.out"
@@ -2121,10 +2364,7 @@ export default function Page() {
                 </>
               ) : selectedNavKey === "dashboard" ? (
                 <>
-                  <div className="mb-5">
-                    <InstructorSlideshow />
-                  </div>
-                  <div className="min-w-0 flex-1">
+                  <div className="min-h-0 min-w-0 w-full max-w-none flex-1 py-1 md:py-2">
                     <DashboardControlCenter
                       themeMode={themeMode}
                       userName={profileName}

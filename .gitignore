@@ -3,6 +3,8 @@
 .env.local
 **/.env
 !**/.env.example
+LOCAL_DEV_CREDENTIALS.txt
+*CREDENTIALS*.txt
 
 # Python
 __pycache__/
@@ -15,6 +17,7 @@ venv/
 node_modules/
 .next/
 out/
+*.tsbuildinfo
 
 # Large local uploads (keep folder via Backend .gitignore + .gitkeep)
 Backend/data/uploads/*

@@ -17,8 +17,16 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import include, path
 
+from apps.portal import views as portal_views
+
 urlpatterns = [
     path('admin/', admin.site.urls),
+    # Explicit routes (do not rely on include) so /api/auth/login/ always resolves.
+    path('api/auth/login/', portal_views.LoginView.as_view(), name='auth-login'),
+    path('api/auth/refresh/', portal_views.RefreshView.as_view(), name='auth-refresh'),
+    path('api/auth/logout/', portal_views.LogoutView.as_view(), name='auth-logout'),
+    path('api/auth/me/', portal_views.MeView.as_view(), name='auth-me'),
+    path('api/portal/', include('apps.portal.urls')),
     path('api/challenges/', include('apps.challenges.urls')),
     path('api/', include('api.urls')),
 ]

@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
 import os
+from datetime import timedelta
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -34,9 +35,11 @@ else:
 SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "django-insecure-whr8w($+2y))zuz-azy2gr3897!ypihga1tzm$k06%m0&gaf-m")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get("DJANGO_DEBUG", "true").lower() in ("1", "true", "yes")
 
-ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
+_extra_hosts = [h.strip() for h in (os.environ.get("DJANGO_ALLOWED_HOSTS") or "").split(",") if h.strip()]
+# In DEBUG, accept any Host (Next proxy, LAN IP, test client "testserver", etc.)
+ALLOWED_HOSTS = ["*"] if DEBUG else ["localhost", "127.0.0.1", *_extra_hosts]
 
 OPENAI_API_KEY = (os.environ.get("OPENAI_API_KEY") or "").strip().strip("\ufeff")
 OPENAI_MODEL = (os.environ.get("OPENAI_MODEL") or "gpt-4o-mini").strip()
@@ -60,6 +63,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'api',
     'apps.challenges.apps.ChallengesConfig',
+    'apps.portal.apps.PortalConfig',
 ]
 
 MIDDLEWARE = [
@@ -150,13 +154,32 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
 ]
+_extra_cors = [o.strip() for o in (os.environ.get("CORS_EXTRA_ORIGINS") or "").split(",") if o.strip()]
+CORS_ALLOWED_ORIGINS = list(dict.fromkeys(CORS_ALLOWED_ORIGINS + _extra_cors))
+# Local dev: avoid CORS friction when using phone/LAN or odd ports
+if DEBUG and os.environ.get("CORS_ALLOW_ALL_IN_DEBUG", "true").lower() in ("1", "true", "yes"):
+    CORS_ALLOW_ALL_ORIGINS = True
 
 REST_FRAMEWORK = {
-    "DEFAULT_AUTHENTICATION_CLASSES": [],
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ],
     "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.AllowAny"],
 }
 
-CSRF_TRUSTED_ORIGINS = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-]
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
+    "ROTATE_REFRESH_TOKENS": False,
+    "AUTH_HEADER_TYPES": ("Bearer",),
+}
+
+CSRF_TRUSTED_ORIGINS = list(
+    dict.fromkeys(
+        [
+            "http://localhost:3000",
+            "http://127.0.0.1:3000",
+            *_extra_cors,
+        ]
+    )
+)

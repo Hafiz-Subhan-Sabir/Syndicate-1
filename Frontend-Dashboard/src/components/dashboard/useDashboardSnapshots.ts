@@ -80,7 +80,7 @@ export function useDashboardSnapshots({
 }: {
   userName: string;
   courses: DashboardCourseLike[];
-}): DashboardSnapshots {
+}): { snapshots: DashboardSnapshots; hydrated: boolean } {
   const [hydrated, setHydrated] = useState(false);
   const [snap, setSnap] = useState<DashboardSnapshots | null>(null);
 
@@ -114,6 +114,11 @@ export function useDashboardSnapshots({
     const xpNum = xpRaw ? Number(xpRaw) : NaN;
     const xpPct = clampPct(Number.isFinite(xpNum) ? xpNum : seedNum(userName + category) % 60 + 20);
 
+    const activeMissionsPct = clampPct(
+      missionId ? 38 + (seedNum(userName + "am") % 52) : 12 + (seedNum(userName + "am") % 28)
+    );
+    const missedChallengesPct = clampPct(2 + (seedNum(userName + "missed") % 45));
+
     const syndicate: SyndicateSnapshot = {
       rankLabel: durationDays >= 30 ? "Diamond" : durationDays === 14 ? "Elite" : "Gold",
       level,
@@ -122,6 +127,8 @@ export function useDashboardSnapshots({
       durationDays,
       category,
       activeMissionTitle: missionTitleFallback(missionId),
+      activeMissionsPct,
+      missedChallengesPct,
       leaderboardPos: (seedNum(userName + "lb") % 87) + 1,
       nextRankChecklist: [
         "Complete 2 missions without skipping",
@@ -173,7 +180,7 @@ export function useDashboardSnapshots({
         message: "Fresh resource discussions are trending. Check updates and react quickly.",
         ts: nowMinus(74),
         read: true,
-        cta: { label: "Open Resources", nav: "resources" }
+        cta: { label: "Open Membership section", nav: "resources" }
       }
     ];
 
@@ -215,13 +222,34 @@ export function useDashboardSnapshots({
           { label: "First affiliate payout", pct: 35, reached: earnings >= 300 }
         ]
       },
-      recommendations: {
-        nextProgram: { title: "Java Programming", reason: "Pairs with Syndicate execution cadence.", nav: "programs" },
-        nextChallenge: { title: "Dominance Protocol", reason: "High ROI for confidence and influence.", nav: "monk" },
-        affiliateTip: { title: "Add a 1-line CTA", reason: "Improve conversions by clarifying the next step.", nav: "affiliate" },
-        systemTip: { title: "Calibrate routine", reason: "Balance daily load so integrity stays in the green band.", nav: "resources" },
-        reminder: { title: "Streak defense", reason: "Do one 10-minute mission today to protect streak.", nav: "monk" }
-      },
+      recommendations: (() => {
+        const primaryProgram = programs[0];
+        const nextProgram =
+          primaryProgram != null
+            ? {
+                title: primaryProgram.title,
+                reason: `${primaryProgram.progressPct > 0 ? `At ${primaryProgram.progressPct}% — ` : ""}${primaryProgram.meta ? `${primaryProgram.meta}. ` : ""}Pairs with Syndicate execution cadence.`,
+                nav: "programs" as const
+              }
+            : courses.length > 0
+              ? {
+                  title: courses[0].title,
+                  reason: courses[0].meta ?? courses[0].statusText ?? "Open Programs to start this track.",
+                  nav: "programs" as const
+                }
+              : {
+                  title: "Java Programming",
+                  reason: "Pairs with Syndicate execution cadence.",
+                  nav: "programs" as const
+                };
+        return {
+          nextProgram,
+          nextChallenge: { title: "Dominance Protocol", reason: "High ROI for confidence and influence.", nav: "monk" },
+          affiliateTip: { title: "Add a 1-line CTA", reason: "Improve conversions by clarifying the next step.", nav: "affiliate" },
+          systemTip: { title: "Calibrate routine", reason: "Balance daily load so integrity stays in the green band.", nav: "resources" },
+          reminder: { title: "Streak defense", reason: "Do one 10-minute mission today to protect streak.", nav: "monk" }
+        };
+      })(),
       activity: [
         { id: "a-1", category: "program", title: "Completed lesson", detail: "Java: OOP Foundations", ts: nowMinus(22) },
         { id: "a-2", category: "syndicate", title: "XP gained", detail: "+12 XP from mission entry", ts: nowMinus(64) },
@@ -234,7 +262,7 @@ export function useDashboardSnapshots({
     setHydrated(true);
   }, [courses, userName]);
 
-  return useMemo(() => {
+  const snapshots = useMemo(() => {
     if (snap) return snap;
     // Pre-hydration fallback: avoid UI flicker and keep predictable shapes.
     const emptySyndicate: SyndicateSnapshot = {
@@ -243,6 +271,8 @@ export function useDashboardSnapshots({
       xpPct: 42,
       streakDays: 4,
       durationDays: 14,
+      activeMissionsPct: 0,
+      missedChallengesPct: 0,
       nextRankChecklist: []
     };
     const empty: DashboardSnapshots = {
@@ -258,5 +288,7 @@ export function useDashboardSnapshots({
     };
     return empty;
   }, [hydrated, snap]);
+
+  return { snapshots, hydrated };
 }
 

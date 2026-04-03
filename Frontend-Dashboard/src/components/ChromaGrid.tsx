@@ -24,8 +24,8 @@ export type ChromaGridProps = {
   selectedId?: string | null;
   onSelect?: (id: string) => void;
   className?: string;
-  /** 2 when sidebar visible, 3 when sidebar hidden */
-  columns?: 2 | 3;
+  /** 2–4 columns at large breakpoints (see globals `.courses-grid`). */
+  columns?: 2 | 3 | 4;
   radius?: number;
   damping?: number;
   fadeOut?: number;
@@ -97,7 +97,7 @@ export default function ChromaGrid({
       ref={rootRef}
       onPointerMove={handleMove}
       onPointerLeave={handleLeave}
-      className={`courses-grid ${columns === 3 ? "cols-3" : "cols-2"} relative w-full h-full items-start gap-6 ${className}`}
+      className={`courses-grid ${columns === 4 ? "cols-4" : columns === 3 ? "cols-3" : "cols-2"} relative h-full w-full items-start gap-6 ${className}`}
       style={
         {
           ["--r" as any]: `${radius}px`,

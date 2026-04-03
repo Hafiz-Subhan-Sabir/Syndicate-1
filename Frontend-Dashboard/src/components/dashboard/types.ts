@@ -45,6 +45,10 @@ export type SyndicateSnapshot = {
   durationDays: 7 | 14 | 30;
   category?: string;
   activeMissionTitle?: string;
+  /** Progress signal for active missions row (0..100). */
+  activeMissionsPct: number;
+  /** Share of challenges missed / slipped (0..100), dashboard metaphor. */
+  missedChallengesPct: number;
   leaderboardPos?: number;
   nextRankChecklist: string[];
 };
