@@ -10,6 +10,14 @@
   --gold-30: rgba(255, 215, 0, 0.3);
   --gold-18: rgba(255, 215, 0, 0.18);
   --gold-10: rgba(255, 215, 0, 0.1);
+  /* Vivid HUD yellow (Tailwind yellow-400 family) — navbar / shell borders */
+  --gold-neon: #facc15;
+  --gold-neon-border: rgba(250, 204, 21, 0.88);
+  --gold-neon-border-mid: rgba(250, 204, 21, 0.55);
+  --gold-neon-border-soft: rgba(250, 204, 21, 0.38);
+  --gold-neon-glow: rgba(250, 204, 21, 0.45);
+  --gold-neon-glow-strong: rgba(250, 204, 21, 0.65);
+  --gold-neon-haze: rgba(250, 204, 21, 0.14);
   --hud-font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
 }
 
@@ -269,7 +277,7 @@ body {
 }
 
 .heading-glow {
-  text-shadow: 0 0 8px rgba(255, 215, 0, 0.28);
+  text-shadow: 0 0 10px rgba(250, 204, 21, 0.38), 0 0 22px rgba(250, 204, 21, 0.15);
 }
 
 .card-hover-scale {
@@ -352,8 +360,128 @@ body {
 .premium-navbar {
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  border-bottom: 2px solid rgba(255, 215, 0, 0.5);
-  box-shadow: 0 2px 14px rgba(255, 215, 0, 0.25);
+  border-bottom: 2px solid var(--gold-neon-border);
+  box-shadow:
+    0 2px 16px var(--gold-neon-glow),
+    0 0 24px var(--gold-neon-haze);
+}
+
+/**
+ * Main shell: navbar, sidebar, content column — bright chamfered neon border + glow
+ * (matches yellow-400 / reference HUD strip)
+ */
+.shell-neon-yellow {
+  border-color: var(--gold-neon-border) !important;
+}
+
+.shell-neon-yellow.gold-stroke-strong,
+.shell-neon-yellow.gold-stroke {
+  box-shadow:
+    0 0 0 1px var(--gold-neon-border),
+    0 0 12px var(--gold-neon-glow),
+    0 0 28px var(--gold-neon-haze),
+    0 0 42px rgba(250, 204, 21, 0.1),
+    0 22px 80px rgba(0, 0, 0, 0.78) !important;
+}
+
+.shell-neon-yellow.cyber-frame::before {
+  background:
+    linear-gradient(135deg, rgba(250, 204, 21, 0.22), rgba(0, 0, 0, 0) 56%),
+    linear-gradient(315deg, rgba(250, 204, 21, 0.14), rgba(0, 0, 0, 0) 60%),
+    radial-gradient(520px 260px at 18% 12%, rgba(250, 204, 21, 0.18), rgba(0, 0, 0, 0) 62%),
+    radial-gradient(520px 300px at 82% 84%, rgba(250, 204, 21, 0.1), rgba(0, 0, 0, 0) 64%) !important;
+}
+
+/* Sidebar nav rows: same neon border language */
+aside.shell-neon-yellow .nav-item {
+  border-color: var(--gold-neon-border-soft) !important;
+  box-shadow: 0 0 0 1px rgba(250, 204, 21, 0.08), 0 0 14px rgba(250, 204, 21, 0.06);
+}
+
+aside.shell-neon-yellow .nav-item:hover {
+  border-color: var(--gold-neon-border-mid) !important;
+  box-shadow:
+    0 0 0 1px rgba(250, 204, 21, 0.2),
+    0 0 18px rgba(250, 204, 21, 0.12);
+}
+
+aside.shell-neon-yellow .nav-item.is-selected {
+  border-color: var(--gold-neon-border) !important;
+  box-shadow:
+    0 0 0 1px var(--gold-neon-border-mid),
+    0 0 16px var(--gold-neon-glow),
+    0 0 28px rgba(250, 204, 21, 0.12) !important;
+}
+
+/* Navbar logo: glow on hover / press — no scale */
+.logo-glow-shell {
+  cursor: pointer;
+  transition:
+    box-shadow 0.35s ease,
+    border-color 0.35s ease,
+    filter 0.35s ease;
+}
+.logo-glow-shell:hover {
+  border-color: var(--gold-neon-border) !important;
+  box-shadow:
+    0 0 0 1px var(--gold-neon-border-mid),
+    0 0 18px var(--gold-neon-glow),
+    0 0 36px rgba(250, 204, 21, 0.22),
+    0 0 56px rgba(250, 204, 21, 0.1) !important;
+  filter: brightness(1.07);
+}
+.logo-glow-shell:focus-visible {
+  outline: none;
+  border-color: var(--gold-neon-border) !important;
+  box-shadow:
+    0 0 0 2px rgba(250, 204, 21, 0.45),
+    0 0 24px var(--gold-neon-glow),
+    0 0 44px rgba(250, 204, 21, 0.2) !important;
+}
+.logo-glow-shell:active {
+  border-color: var(--gold-neon-border) !important;
+  box-shadow:
+    0 0 0 1px var(--gold-neon-border),
+    0 0 22px var(--gold-neon-glow-strong),
+    0 0 48px rgba(250, 204, 21, 0.3),
+    0 0 72px rgba(250, 204, 21, 0.12) !important;
+  filter: brightness(1.12);
+}
+
+/* Navbar icon buttons: clearer gold frame */
+.navbar-chrome-btn {
+  border-color: var(--gold-neon-border-mid) !important;
+  transition: box-shadow 0.3s ease, border-color 0.3s ease, filter 0.3s ease;
+}
+.navbar-chrome-btn:hover {
+  border-color: var(--gold-neon-border) !important;
+  box-shadow:
+    0 0 0 1px rgba(250, 204, 21, 0.25),
+    0 0 14px rgba(250, 204, 21, 0.35);
+  filter: brightness(1.06);
+}
+.navbar-chrome-btn:active {
+  box-shadow:
+    0 0 0 1px var(--gold-neon-border),
+    0 0 20px var(--gold-neon-glow);
+}
+
+/* Wide navbar control (profile strip): same gold frame language as icon buttons */
+.navbar-chrome-panel {
+  border-color: var(--gold-neon-border-mid) !important;
+  transition: box-shadow 0.3s ease, border-color 0.3s ease, filter 0.3s ease;
+}
+.navbar-chrome-panel:hover {
+  border-color: var(--gold-neon-border) !important;
+  box-shadow:
+    0 0 0 1px rgba(250, 204, 21, 0.22),
+    0 0 16px rgba(250, 204, 21, 0.28);
+  filter: brightness(1.05);
+}
+.navbar-chrome-panel:active {
+  box-shadow:
+    0 0 0 1px var(--gold-neon-border),
+    0 0 22px var(--gold-neon-glow);
 }
 
 .hero-gold-frame {

@@ -6,7 +6,7 @@ import type { DashboardNavKey, DashboardSnapshots, NotificationItem } from "./ty
 import { useDashboardSnapshots, type DashboardCourseLike } from "./useDashboardSnapshots";
 import { accentByKey, Card, cn, ProgressBar, themeAccent, type ThemeMode } from "./dashboardPrimitives";
 import { PortalSessionControls } from "../auth/PortalSessionControls";
-import { DataFlowRecommendations } from "./DataFlowRecommendations";
+import { GoalPathSystem } from "./path/GoalPathSystem";
 import { MissionCommandDeckCard } from "./MissionCommandDeckCard";
 import { ProgramPromoEmbed } from "../ProgramPromoEmbed";
 
@@ -550,7 +550,7 @@ export default function DashboardControlCenter({
 
         <MissionCommandDeckCard themeMode={themeMode} />
 
-        <DataFlowRecommendations themeMode={themeMode} snapshots={snapshots} onNavigate={onNavigate} />
+        <GoalPathSystem themeMode={themeMode} courses={courses} onNavigate={onNavigate} />
 
         <AffiliateSnapshotCard themeMode={themeMode} snapshots={snapshots} onNavigate={onNavigate} />
 

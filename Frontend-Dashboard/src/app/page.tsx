@@ -60,7 +60,7 @@ function cn(...parts: Array<string | false | null | undefined>) {
 
 function IconToggle({ open }: { open: boolean }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4" aria-hidden="true">
+    <svg viewBox="0 0 24 24" fill="none" className="h-3.5 w-3.5 sm:h-4 sm:w-4" aria-hidden="true">
       {open ? (
         <>
           <path d="M6 7h12M6 12h9M6 17h12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
@@ -1375,7 +1375,7 @@ export default function Page() {
   const profileBtnRef = useRef<HTMLButtonElement | null>(null);
   const profilePanelRef = useRef<HTMLDivElement | null>(null);
   const profileAvatarInputRef = useRef<HTMLInputElement | null>(null);
-  const logoWrapRef = useRef<HTMLDivElement | null>(null);
+  const logoWrapRef = useRef<HTMLButtonElement | null>(null);
   const sidebarRef = useRef<HTMLElement | null>(null);
   const topDockRef = useRef<HTMLDivElement | null>(null);
   const dockMouseY = useRef<number>(Infinity);
@@ -1703,25 +1703,6 @@ export default function Page() {
         });
       }
 
-      // Floating logo (subtle, elegant)
-      if (logoWrapRef.current) {
-        gsap.to(logoWrapRef.current, {
-          y: -6,
-          duration: 3.4,
-          yoyo: true,
-          repeat: -1,
-          ease: "sine.inOut"
-        });
-        gsap.to(logoWrapRef.current, {
-          rotate: 0.6,
-          duration: 5.2,
-          yoyo: true,
-          repeat: -1,
-          ease: "sine.inOut",
-          transformOrigin: "50% 50%"
-        });
-      }
-
       // GSAP "Dock" magnification for sidebar items (vertical)
       const sidebarTick: gsap.TickerCallback = () => {
         const root = sidebarRef.current;
@@ -2010,11 +1991,11 @@ export default function Page() {
           ref={topbarRef}
           data-anim="in"
           className={cn(
-            "cut-frame cyber-frame gold-stroke-strong premium-navbar sticky top-0 z-50 relative shrink-0 overflow-visible lg:overflow-hidden border border-[rgba(255,215,0,0.5)] bg-[#070707]/80 px-3 py-3 sm:px-4 md:px-5 md:py-4",
-            "flex flex-wrap items-center gap-3 md:gap-6 max-sm:flex-col max-sm:items-stretch"
+            "shell-neon-yellow cut-frame cyber-frame gold-stroke-strong premium-navbar sticky top-0 z-50 relative shrink-0 overflow-visible border bg-[#070707]/80 py-2.5 pl-1 pr-2.5 sm:py-2.5 sm:pl-1.5 sm:pr-4 md:py-3.5 md:pl-2 md:pr-5",
+            "flex items-center justify-between gap-2 sm:gap-3 md:gap-5 lg:overflow-hidden"
           )}
         >
-          <div className="absolute inset-0 opacity-80 [background:radial-gradient(900px_280px_at_30%_0%,rgba(197,179,88,0.16),rgba(0,0,0,0)_55%)]" />
+          <div className="absolute inset-0 opacity-80 [background:radial-gradient(900px_280px_at_30%_0%,rgba(250,204,21,0.14),rgba(0,0,0,0)_55%)]" />
           <div
             ref={topDockRef}
             onMouseMove={(e) => {
@@ -2023,56 +2004,56 @@ export default function Page() {
             onMouseLeave={() => {
               topMouseX.current = Infinity;
             }}
-            className="relative flex min-w-0 items-end gap-2 sm:gap-3 md:gap-4"
+            className="relative flex min-w-0 flex-1 items-center gap-1 sm:gap-1.5 md:gap-2"
           >
             <button
               type="button"
               onClick={() => setSidebarOpen((v) => !v)}
-              className="cut-frame-sm cyber-frame gold-stroke hud-hover-glow grid h-9 w-9 place-items-center border border-[rgba(197,179,88,0.28)] bg-black/70 text-[color:var(--gold)]/90 sm:h-10 sm:w-10"
+              className="navbar-chrome-btn cut-frame-sm cyber-frame gold-stroke grid h-8 w-8 shrink-0 place-items-center border bg-black/70 text-[color:var(--gold-neon)]/95 sm:h-9 sm:w-9 md:h-10 md:w-10"
               aria-label={sidebarOpen ? "Hide sidebar" : "Show sidebar"}
             >
               <IconToggle open={sidebarOpen} />
             </button>
-            {/* Logo placeholder (you'll provide in public/images) */}
-            <div
-              ref={logoWrapRef}
-              data-dock-item="top"
-              className="relative mr-1 grid h-[62px] w-[150px] place-items-center overflow-hidden rounded-lg border border-[rgba(197,179,88,0.52)] bg-black/20 glow-edge-strong sm:h-[78px] sm:w-[200px] md:mr-2 md:h-[92px] md:w-[260px] lg:h-[104px] lg:w-[290px]"
-            >
-              <div className="absolute inset-0 opacity-95 [background:radial-gradient(300px_160px_at_50%_50%,rgba(197,179,88,0.22),rgba(0,0,0,0)_70%)]" />
-              <div className="absolute inset-0 opacity-70 [background:linear-gradient(90deg,rgba(0,0,0,0.85),rgba(0,0,0,0.15),rgba(0,0,0,0.85))]" />
-              <img
-                src="/assets/logo.png"
-                alt="Syndicate"
-                className="relative h-[54px] w-[138px] object-contain opacity-95 [filter:drop-shadow(0_0_44px_rgba(197,179,88,0.26))] sm:h-[66px] sm:w-[186px] md:h-[84px] md:w-[238px] lg:h-[92px] lg:w-[268px]"
-                onError={(e) => {
-                  (e.currentTarget as HTMLImageElement).style.display = "none";
-                }}
-              />
-            </div>
-            <div className="h-7 w-[3px] bg-[color:var(--gold)]/70 [box-shadow:0_0_22px_rgba(197,179,88,0.16)] sm:h-8 md:h-10 md:w-[4px]" />
-            <div className="space-y-1">
-              <div className="heading-glow text-[26px] font-black italic tracking-[0.02em] text-[color:var(--gold)] sm:text-[34px] lg:text-[44px]">
-                THE SYNDICATE
-              </div>
+            {/* Logo: glow on hover/press only — excluded from top dock scale */}
+            <div className="relative min-w-0 flex-1 sm:flex-initial sm:max-w-[min(100%,200px)] md:max-w-[220px]">
+              <button
+                ref={logoWrapRef}
+                type="button"
+                aria-label="Syndicate"
+                className={cn(
+                  "logo-glow-shell cut-frame-sm cyber-frame gold-stroke relative z-[1] mx-auto grid w-full max-w-[min(100%,188px)] place-items-center overflow-hidden sm:mx-0 sm:max-w-[200px] md:max-w-[218px]",
+                  "border border-[color:var(--gold-neon-border-mid)] bg-black/70",
+                  "px-1.5 py-0.5 sm:px-2 sm:py-1 md:px-2.5 md:py-1.5",
+                  "min-h-[36px] sm:min-h-[46px] md:min-h-[60px] lg:min-h-[68px]"
+                )}
+              >
+                <img
+                  src="/assets/logo.png"
+                  alt=""
+                  className="pointer-events-none relative z-[1] h-[30px] w-auto max-w-[min(100%,118px)] object-contain opacity-[0.96] [filter:drop-shadow(0_0_14px_rgba(250,204,21,0.32))] sm:h-[40px] sm:max-w-[148px] md:h-[52px] md:max-w-[182px] lg:h-[60px] lg:max-w-[200px]"
+                  onError={(e) => {
+                    (e.currentTarget as HTMLImageElement).style.display = "none";
+                  }}
+                />
+              </button>
             </div>
           </div>
-          <div className="relative ml-auto flex items-center gap-2 sm:gap-3 max-sm:ml-0 max-sm:w-full max-sm:flex-col max-sm:items-stretch">
-            <div className="relative self-end flex flex-wrap items-end justify-end gap-2 max-sm:w-full">
+          <div className="relative flex shrink-0 items-center gap-1.5 sm:gap-2.5 md:gap-3">
+            <div className="relative flex items-center justify-end gap-1.5 sm:gap-2.5">
               <div className="relative">
                 <button
                   ref={featuresSearchBtnRef}
                   type="button"
                   onClick={() => setFeaturesMenuOpen((v) => !v)}
                   className={cn(
-                    "cut-frame-sm cyber-frame gold-stroke hud-hover-glow grid h-9 w-9 place-items-center border border-[rgba(197,179,88,0.28)] bg-black/70 text-[color:var(--gold)]/90 sm:h-10 sm:w-10",
-                    featuresMenuOpen && "hud-selected-glow border-[rgba(255,215,0,0.55)]"
+                    "navbar-chrome-btn cut-frame-sm cyber-frame gold-stroke grid h-8 w-8 place-items-center border bg-black/70 text-[color:var(--gold-neon)]/95 sm:h-9 sm:w-9 md:h-10 md:w-10",
+                    featuresMenuOpen && "hud-selected-glow border-[color:var(--gold-neon-border)]"
                   )}
                   aria-label="Search and site menu"
                   aria-expanded={featuresMenuOpen}
                   aria-haspopup="menu"
                 >
-                  <svg viewBox="0 0 24 24" fill="none" className="h-[18px] w-[18px] sm:h-5 sm:w-5" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" className="h-[14px] w-[14px] sm:h-[17px] sm:w-[17px] md:h-5 md:w-5" aria-hidden="true">
                     <path
                       d="M10.5 18.2a7.7 7.7 0 1 1 0-15.4a7.7 7.7 0 0 1 0 15.4Z"
                       stroke="currentColor"
@@ -2085,10 +2066,10 @@ export default function Page() {
                 {featuresMenuOpen ? (
                   <div
                     ref={featuresMenuPanelRef}
-                    className="cut-frame cyber-frame gold-stroke glass-dark premium-gold-border absolute right-0 top-[46px] z-50 w-[min(92vw,320px)] overflow-hidden p-3 sm:top-[50px] sm:p-4"
+                    className="cut-frame cyber-frame gold-stroke glass-dark absolute right-0 top-full z-50 mt-2 w-[min(92vw,320px)] overflow-hidden border border-[color:var(--gold-neon-border-mid)] p-3 shadow-[0_0_24px_rgba(250,204,21,0.12)] sm:p-4"
                     role="menu"
                   >
-                    <div className="absolute inset-0 opacity-70 [background:radial-gradient(520px_220px_at_20%_0%,rgba(197,179,88,0.12),rgba(0,0,0,0)_62%)]" />
+                    <div className="absolute inset-0 opacity-70 [background:radial-gradient(520px_220px_at_20%_0%,rgba(250,204,21,0.1),rgba(0,0,0,0)_62%)]" />
                     <div className="relative">
                       <div className="text-[10px] font-extrabold uppercase tracking-[0.22em] text-white/50">Find & navigate</div>
                       <input
@@ -2146,8 +2127,9 @@ export default function Page() {
                   type="button"
                   onClick={() => setProfileOpen((v) => !v)}
                   className={cn(
-                    "cut-frame-sm cyber-frame gold-stroke hud-hover-glow glass-dark premium-gold-border premium-button inline-flex items-center gap-2 px-2.5 py-2.5 sm:gap-3 sm:px-4 sm:py-3 transition will-change-transform",
-                    "hover:border-[rgba(255,215,0,0.62)]",
+                    "navbar-chrome-panel cut-frame-sm cyber-frame gold-stroke glass-dark premium-button inline-flex w-full max-w-[min(100%,188px)] items-center gap-1.5 rounded-md border px-1.5 py-0.5 sm:mx-0 sm:max-w-[200px] sm:gap-2 sm:px-2 sm:py-1 md:max-w-[218px] md:px-2.5 md:py-1.5",
+                    "min-h-[36px] h-[36px] sm:min-h-[46px] sm:h-[46px] md:min-h-[60px] md:h-[60px] lg:min-h-[68px] lg:h-[68px]",
+                    "will-change-transform",
                     profileOpen && "hud-selected-glow"
                   )}
                   aria-haspopup="menu"
@@ -2157,18 +2139,18 @@ export default function Page() {
                     src={profileAvatar}
                     alt="Profile avatar"
                     className={cn(
-                      "h-12 w-12 rounded-md border border-[rgba(197,179,88,0.22)] bg-black/30 object-contain p-0.5",
-                      profileOpen && "border-[rgba(255,215,0,0.55)]"
+                      "h-[26px] w-[26px] shrink-0 rounded-[3px] border border-[color:var(--gold-neon-border-soft)] bg-black/30 object-cover sm:h-[34px] sm:w-[34px] md:h-[44px] md:w-[44px] lg:h-[52px] lg:w-[52px]",
+                      profileOpen && "border-[color:var(--gold-neon-border)]"
                     )}
                     onError={(e) => {
                       (e.currentTarget as HTMLImageElement).style.display = "none";
                     }}
                   />
-                  <div className="hidden text-left min-[380px]:block">
-                    <div className="text-[18px] font-black uppercase tracking-[0.14em] text-[color:var(--gold)]/90">
+                  <div className="min-w-0 flex-1 text-left leading-none">
+                    <div className="truncate text-[9px] font-black uppercase tracking-[0.08em] text-[color:var(--gold-neon)]/95 sm:text-[11px] sm:tracking-[0.1em] md:text-[12px] md:tracking-[0.11em] lg:text-[13px] lg:tracking-[0.12em]">
                       {profileName}
                     </div>
-                    <div className="mt-1 text-[9px] font-extrabold uppercase tracking-[0.18em] text-white/45 sm:text-[10px] sm:tracking-[0.22em]">
+                    <div className="mt-0.5 text-[6px] font-extrabold uppercase tracking-[0.14em] text-white/45 sm:mt-0.5 sm:text-[7px] sm:tracking-[0.16em] md:text-[8px] md:tracking-[0.18em]">
                       Profile
                     </div>
                   </div>
@@ -2177,7 +2159,7 @@ export default function Page() {
                 {profileOpen ? (
                   <div
                     ref={profilePanelRef}
-                    className="cut-frame cyber-frame gold-stroke glass-dark premium-gold-border absolute left-1/2 top-[54px] z-50 w-[min(92vw,360px)] -translate-x-1/2 overflow-hidden p-3 sm:left-auto sm:right-0 sm:translate-x-0 sm:p-4"
+                    className="cut-frame cyber-frame gold-stroke glass-dark premium-gold-border absolute left-1/2 top-full z-50 mt-2 w-[min(92vw,360px)] -translate-x-1/2 overflow-hidden p-3 sm:left-auto sm:right-0 sm:mt-2 sm:translate-x-0 sm:p-4"
                     role="menu"
                   >
                     <div className="absolute inset-0 opacity-70 [background:radial-gradient(620px_260px_at_20%_0%,rgba(0,255,255,0.10),rgba(0,0,0,0)_62%)]" />
@@ -2279,11 +2261,11 @@ export default function Page() {
                 dockMouseY.current = Infinity;
               }}
               className={cn(
-                "cut-frame cyber-frame gold-stroke relative col-span-12 overflow-hidden border border-[rgba(197,179,88,0.22)] bg-[#060606]/70 p-2.5 sm:p-3 md:col-span-2 lg:col-span-2",
+                "shell-neon-yellow cut-frame cyber-frame gold-stroke relative col-span-12 overflow-hidden border bg-[#060606]/70 p-2.5 sm:p-3 md:col-span-2 lg:col-span-2",
                 "h-auto max-h-none overflow-visible lg:sticky lg:top-0 lg:h-full lg:max-h-none lg:overflow-auto no-scrollbar"
               )}
             >
-              <div className="absolute inset-0 opacity-70 [background:radial-gradient(680px_320px_at_20%_10%,rgba(197,179,88,0.11),rgba(0,0,0,0)_62%)]" />
+              <div className="absolute inset-0 opacity-70 [background:radial-gradient(680px_320px_at_20%_10%,rgba(250,204,21,0.1),rgba(0,0,0,0)_62%)]" />
               <div className="relative pb-6">
                 <div className="mb-3 flex items-center justify-between">
                   <div className="text-[13px] font-extrabold uppercase tracking-[0.22em] text-white/60">Navigation</div>
@@ -2299,19 +2281,19 @@ export default function Page() {
                       "cut-frame-sm hud-hover-glow glass-dark premium-gold-border gold-glow-hover transition",
                       "hover:bg-black/45",
                       selectedNavKey === item.key &&
-                        "is-selected glow-edge-strong hud-selected-glow border-[rgba(197,179,88,0.85)] bg-[rgba(197,179,88,0.12)]"
+                        "is-selected glow-edge-strong hud-selected-glow border-[color:var(--gold-neon-border)] bg-[rgba(250,204,21,0.08)]"
                     )}
                     type="button"
                   >
                     <CheckboxSlot active={selectedNavKey === item.key} />
-                    <span className="grid h-7 w-7 place-items-center rounded-md border border-[rgba(197,179,88,0.14)] bg-black/25 text-[color:var(--gold)]/80 group-hover:text-[color:var(--gold)]">
+                    <span className="grid h-7 w-7 place-items-center rounded-md border border-[color:var(--gold-neon-border-soft)] bg-black/25 text-[color:var(--gold-neon)]/90 group-hover:text-[color:var(--gold-neon)]">
                       <NavIcon k={item.key} />
                     </span>
-                    <span className="nav-label text-[13px] font-extrabold uppercase tracking-[0.12em] text-[color:var(--gold)]/90 group-hover:text-[color:var(--gold)] sm:text-[14px] sm:tracking-[0.14em]">
+                    <span className="nav-label text-[13px] font-extrabold uppercase tracking-[0.12em] text-[color:var(--gold-neon)]/92 group-hover:text-[color:var(--gold-neon)] sm:text-[14px] sm:tracking-[0.14em]">
                       <span className="nav-label-text">{item.label}</span>
                       <span className="nav-glitch" aria-hidden="true" />
                     </span>
-                    <span className="ml-auto h-px w-[40px] bg-[linear-gradient(90deg,rgba(197,179,88,0.0),rgba(197,179,88,0.35))] opacity-0 transition group-hover:opacity-100" />
+                    <span className="ml-auto h-px w-[40px] bg-[linear-gradient(90deg,rgba(250,204,21,0),rgba(250,204,21,0.45))] opacity-0 transition group-hover:opacity-100" />
                   </button>
                 ))}
                 </div>
@@ -2323,12 +2305,12 @@ export default function Page() {
           <section
             data-anim="in"
             className={cn(
-              "cut-frame cyber-frame gold-stroke relative col-span-12 flex min-h-0 w-full max-w-none flex-col overflow-hidden border border-[rgba(197,179,88,0.22)] bg-[#060606]/70 p-4 sm:p-5 md:p-6 lg:p-7",
+              "shell-neon-yellow cut-frame cyber-frame gold-stroke relative col-span-12 flex min-h-0 w-full max-w-none flex-col overflow-hidden border bg-[#060606]/70 p-4 sm:p-5 md:p-6 lg:p-7",
               sidebarOpen ? "md:col-span-10 lg:col-span-10" : "md:col-span-12 lg:col-span-12",
               "lg:h-full lg:min-h-0"
             )}
           >
-            <div className="absolute inset-0 opacity-70 [background:radial-gradient(820px_520px_at_40%_0%,rgba(197,179,88,0.10),rgba(0,0,0,0)_64%)]" />
+            <div className="absolute inset-0 opacity-70 [background:radial-gradient(820px_520px_at_40%_0%,rgba(250,204,21,0.09),rgba(0,0,0,0)_64%)]" />
             <div
               data-main-shell-scroll
               className={cn(
@@ -2336,6 +2318,11 @@ export default function Page() {
                 !sidebarOpen && "md:pl-14"
               )}
             >
+              <header className="mb-4 shrink-0 border-b border-[color:var(--gold-neon-border-mid)] pb-3 pr-1">
+                <div className="heading-glow text-[22px] font-black italic tracking-[0.02em] text-[color:var(--gold-neon)] drop-shadow-[0_0_28px_rgba(250,204,21,0.35)] sm:text-[28px] lg:text-[34px]">
+                  THE SYNDICATE
+                </div>
+              </header>
               {selectedNavKey === "monk" ? (
                 <SyndicateModeSection />
               ) : selectedNavKey === "affiliate" ? (

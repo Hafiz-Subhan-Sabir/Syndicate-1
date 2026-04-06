@@ -11,6 +11,10 @@ const FAB_SECTION_KEYS = new Set(["dashboard", "programs", "affiliate", "resourc
 const FAB_SHELL =
   "cut-frame-sm hud-hover-glow glass-dark premium-gold-border gold-glow-hover transition";
 
+function prefetchOpsDeckChunks() {
+  void import("@/features/productivity/control-center/QuickAccessGrid");
+}
+
 export function FloatingGoalsButton() {
   const { openGoalsPanel, isGoalsPanelOpen, shellSectionKey } = useGoalsPanel();
   const allowed = shellSectionKey != null && FAB_SECTION_KEYS.has(shellSectionKey);
@@ -21,6 +25,8 @@ export function FloatingGoalsButton() {
     <button
       type="button"
       onClick={openGoalsPanel}
+      onPointerEnter={prefetchOpsDeckChunks}
+      onFocus={prefetchOpsDeckChunks}
       className={cn(
         "group",
         FAB_SHELL,

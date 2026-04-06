@@ -1,8 +1,9 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
+import { Calendar, Clock } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { portalFetch } from "@/lib/portal-api";
 import {
@@ -16,6 +17,115 @@ import {
   ReminderStatusBadge
 } from "./DeckListPrimitives";
 import { Card, cn, type ThemeMode } from "./dashboardPrimitives";
+
+type PickerTone = "cyan" | "fuchsia";
+
+const PICKER_TONE: Record<
+  PickerTone,
+  { wrap: string; icon: string; divider: string }
+> = {
+  cyan: {
+    wrap:
+      "border-cyan-400/38 shadow-[inset_0_1px_0_rgba(34,211,238,0.07)] focus-within:border-cyan-300/80 focus-within:shadow-[0_0_0_1px_rgba(34,211,238,0.3),0_0_22px_rgba(34,211,238,0.22)]",
+    icon: "text-cyan-200/75",
+    divider: "border-cyan-400/25"
+  },
+  fuchsia: {
+    wrap:
+      "border-fuchsia-400/40 shadow-[inset_0_1px_0_rgba(192,132,252,0.08)] focus-within:border-fuchsia-300/78 focus-within:shadow-[0_0_0_1px_rgba(192,132,252,0.28),0_0_22px_rgba(168,85,247,0.22)]",
+    icon: "text-fuchsia-200/75",
+    divider: "border-fuchsia-400/28"
+  }
+};
+
+/** Native date/time pickers only — read-only field + icon opens calendar or clock (`showPicker` when supported). */
+function DeckPickerField({
+  id,
+  type,
+  label,
+  labelClassName,
+  value,
+  onValueChange,
+  disabled,
+  tone
+}: {
+  id: string;
+  type: "date" | "time";
+  label: string;
+  labelClassName: string;
+  value: string;
+  onValueChange: (v: string) => void;
+  disabled?: boolean;
+  tone: PickerTone;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const t = PICKER_TONE[tone];
+
+  const openPicker = () => {
+    const el = inputRef.current;
+    if (!el || disabled) return;
+    try {
+      if (typeof el.showPicker === "function") el.showPicker();
+    } catch {
+      el.focus();
+    }
+  };
+
+  return (
+    <div>
+      <label htmlFor={id} className={labelClassName}>
+        {label}
+      </label>
+      <div
+        className={cn(
+          "mt-1.5 flex min-h-[2.65rem] w-full min-w-0 items-stretch overflow-hidden rounded-lg border bg-black/45",
+          t.wrap
+        )}
+      >
+        <button
+          type="button"
+          disabled={disabled}
+          onClick={openPicker}
+          className={cn(
+            "grid w-11 shrink-0 place-items-center border-r bg-black/35",
+            t.divider,
+            disabled ? "cursor-not-allowed opacity-40" : "cursor-pointer hover:bg-white/5"
+          )}
+          aria-label={type === "date" ? "Open calendar" : "Open clock"}
+        >
+          {type === "date" ? (
+            <Calendar className={cn("h-[18px] w-[18px]", t.icon)} strokeWidth={2} aria-hidden />
+          ) : (
+            <Clock className={cn("h-[18px] w-[18px]", t.icon)} strokeWidth={2} aria-hidden />
+          )}
+        </button>
+        <input
+          ref={inputRef}
+          id={id}
+          type={type}
+          value={value}
+          onChange={(e) => onValueChange(e.target.value)}
+          readOnly
+          disabled={disabled}
+          onClick={openPicker}
+          className={cn(
+            "min-w-0 flex-1 cursor-pointer bg-transparent px-3 py-2.5 text-[14px] outline-none md:py-2.5 md:text-[15px]",
+            tone === "cyan"
+              ? "text-cyan-50/95"
+              : "text-fuchsia-50/95"
+          )}
+        />
+      </div>
+    </div>
+  );
+}
+
+function localDateAndTimeToIso(dateStr: string, timeStr: string): string | null {
+  if (!dateStr?.trim() || !timeStr?.trim()) return null;
+  const t = timeStr.length === 5 ? `${timeStr}:00` : timeStr;
+  const d = new Date(`${dateStr}T${t}`);
+  return Number.isFinite(d.getTime()) ? d.toISOString() : null;
+}
 
 function QuickAccessGridFallback() {
   return (
@@ -61,6 +171,37 @@ type NoteRow = {
   body: string;
   createdAt: number;
 };
+
+/** Session-scoped cache so reopening the ops deck paints lists before the portal round-trip (not cookies — larger quota, no extra HTTP). */
+const SS_PORTAL_DECK_CACHE = "dashboarded:portal-deck-cache-v1";
+
+type PortalDeckCachePayload = {
+  missions: MissionRow[];
+  reminders: ReminderRow[];
+  notes: NoteRow[];
+};
+
+function readPortalDeckCache(): PortalDeckCachePayload | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = sessionStorage.getItem(SS_PORTAL_DECK_CACHE);
+    if (!raw) return null;
+    const o = JSON.parse(raw) as Partial<PortalDeckCachePayload>;
+    if (!Array.isArray(o.missions) || !Array.isArray(o.reminders) || !Array.isArray(o.notes)) return null;
+    return { missions: o.missions, reminders: o.reminders, notes: o.notes };
+  } catch {
+    return null;
+  }
+}
+
+function writePortalDeckCache(m: MissionRow[], r: ReminderRow[], n: NoteRow[]) {
+  try {
+    const payload: PortalDeckCachePayload = { missions: m, reminders: r, notes: n };
+    sessionStorage.setItem(SS_PORTAL_DECK_CACHE, JSON.stringify(payload));
+  } catch {
+    /* quota / private mode */
+  }
+}
 
 type ApiMission = { id: number; title: string; target_at: string; points: number; status: string };
 type ApiReminder = { id: number; title: string; date: string; time: string; points: number; status: string };
@@ -210,9 +351,12 @@ export function MissionCommandDeckCard({ themeMode }: { themeMode: ThemeMode }) 
   const useApiDeck =
     !authLoading && !!user && (can("deck.view") || can("deck.manage") || can("*"));
   const canDeckWrite = can("deck.manage") || can("*");
-  const [missions, setMissions] = useState<MissionRow[]>([]);
-  const [reminders, setReminders] = useState<ReminderRow[]>([]);
-  const [notes, setNotes] = useState<NoteRow[]>([]);
+  const deckInit = useMemo((): PortalDeckCachePayload => {
+    return readPortalDeckCache() ?? { missions: [], reminders: [], notes: [] };
+  }, []);
+  const [missions, setMissions] = useState<MissionRow[]>(() => deckInit.missions);
+  const [reminders, setReminders] = useState<ReminderRow[]>(() => deckInit.reminders);
+  const [notes, setNotes] = useState<NoteRow[]>(() => deckInit.notes);
   const [notesExpanded, setNotesExpanded] = useState(false);
   const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
   const [portalError, setPortalError] = useState<string | null>(null);
@@ -232,7 +376,8 @@ export function MissionCommandDeckCard({ themeMode }: { themeMode: ThemeMode }) 
   const [nSort, setNSort] = useState<DeckSortDir>("desc");
 
   const [mTitle, setMTitle] = useState("");
-  const [mTarget, setMTarget] = useState("");
+  const [mDate, setMDate] = useState("");
+  const [mTime, setMTime] = useState("");
   const [mPoints, setMPoints] = useState(10);
 
   const [rTitle, setRTitle] = useState("");
@@ -272,13 +417,15 @@ export function MissionCommandDeckCard({ themeMode }: { themeMode: ThemeMode }) 
           if (again.ok && Array.isArray(again.data)) mList = again.data as ApiMission[];
         }
       }
-      setMissions(mList.map(mapMission));
-
+      const mappedM = mList.map(mapMission);
       const rList = (rRes.ok && Array.isArray(rRes.data) ? rRes.data : []) as ApiReminder[];
-      setReminders(rList.map(mapReminder));
-
+      const mappedR = rList.map(mapReminder);
       const nList = (nRes.ok && Array.isArray(nRes.data) ? nRes.data : []) as ApiNote[];
-      setNotes(nList.map(mapNote).sort((a, b) => b.createdAt - a.createdAt));
+      const mappedN = nList.map(mapNote).sort((a, b) => b.createdAt - a.createdAt);
+      setMissions(mappedM);
+      setReminders(mappedR);
+      setNotes(mappedN);
+      writePortalDeckCache(mappedM, mappedR, mappedN);
     } catch (e) {
       setPortalError(e instanceof Error ? e.message : "Portal sync failed");
     } finally {
@@ -311,6 +458,11 @@ export function MissionCommandDeckCard({ themeMode }: { themeMode: ThemeMode }) 
       hydrateLocal();
     }
   }, [useApiDeck, authLoading, refreshPortal, hydrateLocal]);
+
+  useEffect(() => {
+    if (useApiDeck) return;
+    writePortalDeckCache(missions, reminders, notes);
+  }, [useApiDeck, missions, reminders, notes]);
 
   const persistMissions = useCallback((next: MissionRow[]) => {
     setMissions(next);
@@ -385,13 +537,14 @@ export function MissionCommandDeckCard({ themeMode }: { themeMode: ThemeMode }) 
 
   const addMission = async () => {
     const title = mTitle.trim();
-    if (!title || !mTarget) return;
+    const targetIso = localDateAndTimeToIso(mDate, mTime);
+    if (!title || !targetIso) return;
     if (useApiDeck && canDeckWrite) {
       const res = await portalFetch(`/api/portal/missions/`, {
         method: "POST",
         body: JSON.stringify({
           title,
-          target_at: new Date(mTarget).toISOString(),
+          target_at: targetIso,
           points: Math.max(0, Math.min(9999, Math.floor(mPoints))),
           status: "active"
         })
@@ -405,14 +558,15 @@ export function MissionCommandDeckCard({ themeMode }: { themeMode: ThemeMode }) 
       const row: MissionRow = {
         id: uid(),
         title,
-        targetIso: new Date(mTarget).toISOString(),
+        targetIso,
         points: Math.max(0, Math.min(9999, Math.floor(mPoints))),
         status: "active"
       };
       persistMissions([row, ...missions]);
     }
     setMTitle("");
-    setMTarget("");
+    setMDate("");
+    setMTime("");
     setMPoints(10);
   };
 
@@ -567,17 +721,27 @@ export function MissionCommandDeckCard({ themeMode }: { themeMode: ThemeMode }) 
                 disabled={useApiDeck && !canDeckWrite}
               />
             </div>
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-              <div>
-                <label className={missionsLabel}>Target date & time</label>
-                <input
-                  className={missionsInput}
-                  type="datetime-local"
-                  value={mTarget}
-                  onChange={(e) => setMTarget(e.target.value)}
-                  disabled={useApiDeck && !canDeckWrite}
-                />
-              </div>
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+              <DeckPickerField
+                id="mission-target-date"
+                type="date"
+                label="Target date"
+                labelClassName={missionsLabel}
+                value={mDate}
+                onValueChange={setMDate}
+                disabled={useApiDeck && !canDeckWrite}
+                tone="cyan"
+              />
+              <DeckPickerField
+                id="mission-target-time"
+                type="time"
+                label="Target time"
+                labelClassName={missionsLabel}
+                value={mTime}
+                onValueChange={setMTime}
+                disabled={useApiDeck && !canDeckWrite}
+                tone="cyan"
+              />
               <div>
                 <label className={missionsLabel}>Points</label>
                 <input
@@ -727,26 +891,26 @@ export function MissionCommandDeckCard({ themeMode }: { themeMode: ThemeMode }) 
               />
             </div>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-              <div>
-                <label className={remindersLabel}>Date</label>
-                <input
-                  className={remindersInput}
-                  type="date"
-                  value={rDate}
-                  onChange={(e) => setRDate(e.target.value)}
-                  disabled={useApiDeck && !canDeckWrite}
-                />
-              </div>
-              <div>
-                <label className={remindersLabel}>Time</label>
-                <input
-                  className={remindersInput}
-                  type="time"
-                  value={rTime}
-                  onChange={(e) => setRTime(e.target.value)}
-                  disabled={useApiDeck && !canDeckWrite}
-                />
-              </div>
+              <DeckPickerField
+                id="reminder-date"
+                type="date"
+                label="Date"
+                labelClassName={remindersLabel}
+                value={rDate}
+                onValueChange={setRDate}
+                disabled={useApiDeck && !canDeckWrite}
+                tone="fuchsia"
+              />
+              <DeckPickerField
+                id="reminder-time"
+                type="time"
+                label="Time"
+                labelClassName={remindersLabel}
+                value={rTime}
+                onValueChange={setRTime}
+                disabled={useApiDeck && !canDeckWrite}
+                tone="fuchsia"
+              />
             </div>
             <motion.button
               type="button"

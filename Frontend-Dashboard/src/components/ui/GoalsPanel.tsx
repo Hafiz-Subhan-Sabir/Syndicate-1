@@ -1,6 +1,6 @@
 "use client";
 
-import { startTransition, useEffect, useState } from "react";
+import { useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
 import { MissionCommandDeckCard } from "@/components/dashboard/MissionCommandDeckCard";
@@ -17,24 +17,11 @@ const MAIN_SCROLL_SELECTOR = "[data-main-shell-scroll]";
 /**
  * Docked overlay inside main `<section>` (below navbar, main column width).
  * Ops deck is statically imported; Quick Access is lazy-loaded inside the card.
+ * Deck mounts with the panel (no deferred frame) so the shell fills immediately; portal data can hydrate from session cache.
  */
 export function GoalsPanel() {
   const { isGoalsPanelOpen, closeGoalsPanel, themeMode } = useGoalsPanel();
   const t = themeAccent(themeMode);
-  /** One frame for sheet paint, then transition-priority commit so ChromaGrid/Programs stays smooth. */
-  const [mountDeck, setMountDeck] = useState(false);
-
-  useEffect(() => {
-    if (!isGoalsPanelOpen) {
-      setMountDeck(false);
-      return;
-    }
-    setMountDeck(false);
-    const raf = requestAnimationFrame(() => {
-      startTransition(() => setMountDeck(true));
-    });
-    return () => cancelAnimationFrame(raf);
-  }, [isGoalsPanelOpen]);
 
   useEffect(() => {
     if (!isGoalsPanelOpen) return;
@@ -109,16 +96,7 @@ export function GoalsPanel() {
                 "[scrollbar-color:rgba(197,179,88,0.45)_rgba(0,0,0,0.35)] [touch-action:pan-y]"
               )}
             >
-              {mountDeck ? (
-                <MissionCommandDeckCard themeMode={themeMode} />
-              ) : (
-                <div
-                  className="flex min-h-[min(40vh,320px)] items-center justify-center rounded-lg border border-[rgba(197,179,88,0.15)] bg-black/30 py-12"
-                  aria-hidden
-                >
-                  <div className="h-1 w-40 max-w-[70%] animate-pulse rounded-full bg-[rgba(197,179,88,0.2)]" />
-                </div>
-              )}
+              <MissionCommandDeckCard themeMode={themeMode} />
             </div>
           </motion.div>
         </div>
