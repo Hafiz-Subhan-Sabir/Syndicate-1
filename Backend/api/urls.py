@@ -12,6 +12,7 @@ urlpatterns = [
     path("auth/logout/", portal_views.LogoutView.as_view()),
     path("auth/me/", portal_views.MeView.as_view()),
     path("portal/", include("apps.portal.urls")),
+    path("portal/membership/", include("apps.membership.urls")),
     path("health/", views.health),
     path("mindset/status/", views.mindset_status),
     path("documents/upload/", views.upload_document),

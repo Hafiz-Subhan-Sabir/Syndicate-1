@@ -291,3 +291,25 @@ export function coursesForGoalStep(goal: GoalId, stepIndex: number): CourseRec[]
 
   return [support, focus, future];
 }
+
+/** Match dashboard course titles to the middle “focus” card when possible. */
+export function personalizeCourses(
+  goal: GoalId,
+  stepIdx: number,
+  triple: [CourseRec, CourseRec, CourseRec],
+  courses: { title: string }[]
+): [CourseRec, CourseRec, CourseRec] {
+  if (!courses.length) return triple;
+  const step = ROADMAPS[goal][stepIdx];
+  if (!step) return triple;
+  const token =
+    step.title
+      .split(/[\s/]+/)[0]
+      ?.toLowerCase()
+      .replace(/[^a-z0-9]/g, "") ?? "";
+  if (token.length < 2) return triple;
+  const match = courses.find((c) => c.title.toLowerCase().includes(token));
+  if (!match) return triple;
+  const [a, b, c] = triple;
+  return [a, { ...b, title: match.title }, c];
+}

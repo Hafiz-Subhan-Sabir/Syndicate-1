@@ -64,7 +64,12 @@ INSTALLED_APPS = [
     'api',
     'apps.challenges.apps.ChallengesConfig',
     'apps.portal.apps.PortalConfig',
+    'apps.membership.apps.MembershipConfig',
 ]
+
+# Optional: Redis for membership article search index (inverted index + short-lived result cache).
+# If unset, search uses the database only (substring match on title/description/content).
+REDIS_URL = (os.environ.get("REDIS_URL") or "").strip()
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

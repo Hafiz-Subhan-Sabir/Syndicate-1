@@ -293,7 +293,7 @@ function QuickAccessTile({
       onClick={() => onActivate(tool)}
       aria-label={`Open ${tool.label} in this tab`}
       className={cn(
-        "group flex min-h-[6.5rem] w-full max-w-full flex-col items-center justify-between rounded-xl border bg-gradient-to-b from-[#0c0c0c]/98 to-[#040404]/98 px-2 py-2.5 text-center outline-none sm:min-h-[7rem] sm:px-2 sm:py-3",
+        "compact-card-ui group flex min-h-[6.5rem] w-full max-w-full flex-col items-center justify-between rounded-xl border bg-gradient-to-b from-[#0c0c0c]/98 to-[#040404]/98 px-2 py-2.5 text-center outline-none sm:min-h-[7rem] sm:px-2 sm:py-3",
         "touch-manipulation select-none",
         "motion-safe:transition-[box-shadow,border-color,filter] motion-safe:duration-300 motion-safe:ease-out",
         accent.tileBorder,
@@ -497,11 +497,11 @@ export function QuickAccessGrid({
           className
         )}
       >
-        <div className="shrink-0 border-b border-[rgba(197,179,88,0.14)] pb-4">
+        <div className="shrink-0 border-b border-[rgba(197,179,88,0.14)] pb-[clamp(0.85rem,2vw+0.25rem,1.15rem)]">
           <h2 className="text-[clamp(0.95rem,2.2vw,1.2rem)] font-black uppercase italic tracking-[0.18em] text-[color:var(--gold)] drop-shadow-[0_0_24px_rgba(255,215,0,0.15)] sm:tracking-[0.22em]">
             Quick access
           </h2>
-          <p className="mt-2 max-w-4xl text-[12px] leading-relaxed text-white/62 sm:text-[13px] md:text-[14px] md:leading-relaxed">
+          <p className="mt-2 max-w-4xl text-[clamp(0.68rem,0.45vw+0.55rem,0.9rem)] leading-relaxed text-white/62 md:leading-relaxed">
             {resolvedHelp}
           </p>
         </div>
@@ -509,13 +509,13 @@ export function QuickAccessGrid({
         <div
           className={cn(
             "min-h-0 w-full flex-1",
-            isFull && "overflow-y-auto overflow-x-hidden pt-5 [scrollbar-color:rgba(197,179,88,0.45)_rgba(0,0,0,0.35)]",
-            !isFull && "mt-5"
+            isFull && "overflow-y-auto overflow-x-hidden pt-[clamp(1rem,2.5vw+0.35rem,1.35rem)] [scrollbar-color:rgba(197,179,88,0.45)_rgba(0,0,0,0.35)]",
+            !isFull && "mt-[clamp(1rem,2.5vw+0.35rem,1.35rem)]"
           )}
         >
           <div
             className={cn(
-              "grid w-full min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 md:gap-6 xl:gap-7",
+              "grid w-full min-w-0 grid-cols-1 gap-[clamp(0.85rem,2vw+0.35rem,1.75rem)] sm:grid-cols-2",
               isFull && "pb-2"
             )}
           >
@@ -523,7 +523,7 @@ export function QuickAccessGrid({
               <div
                 key={cat.id}
                 className={cn(
-                  "relative flex min-h-0 min-w-0 flex-col overflow-hidden rounded-xl border p-3.5 sm:p-5",
+                  "relative flex min-h-0 min-w-0 flex-col overflow-hidden rounded-xl border p-[var(--fluid-deck-p)]",
                   "shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]",
                   cat.deckClassName
                 )}
@@ -537,7 +537,7 @@ export function QuickAccessGrid({
                   aria-hidden
                 />
 
-                <div className="relative z-[1] flex min-w-0 flex-col gap-4">
+                <div className="relative z-[1] flex min-w-0 flex-col gap-[clamp(0.85rem,2vw+0.25rem,1.15rem)]">
                   <div
                     className={cn(
                       "flex flex-wrap items-start justify-between gap-2 border-b pb-3",
@@ -545,10 +545,10 @@ export function QuickAccessGrid({
                     )}
                   >
                     <div className="min-w-0">
-                      <div className="font-mono text-[9px] font-bold uppercase tracking-[0.2em] text-white/48 sm:text-[10px]">
+                      <div className="font-mono text-[clamp(0.5rem,0.35vw+0.38rem,0.65rem)] font-bold uppercase tracking-[0.2em] text-white/48">
                         {cat.deckLabel}
                       </div>
-                      <div className="mt-1.5 text-[13px] font-black uppercase tracking-[0.2em] text-white/92 sm:text-[14px] sm:tracking-[0.24em]">
+                      <div className="mt-1.5 text-[clamp(0.72rem,0.55vw+0.5rem,0.9rem)] font-black uppercase tracking-[0.2em] text-white/92 sm:tracking-[0.24em]">
                         {cat.title}
                       </div>
                     </div>
@@ -564,7 +564,7 @@ export function QuickAccessGrid({
                     ) : null}
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-3 md:gap-3.5">
+                  <div className="grid grid-cols-2 gap-[clamp(0.45rem,1.2vw+0.2rem,0.9rem)] sm:grid-cols-3">
                     {cat.tools.map((tool) => (
                       <QuickAccessTile
                         key={tool.id}

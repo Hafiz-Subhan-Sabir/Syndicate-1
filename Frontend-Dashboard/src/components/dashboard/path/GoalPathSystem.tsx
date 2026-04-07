@@ -1,14 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import type { DashboardNavKey } from "../types";
 import type { DashboardCourseLike } from "../useDashboardSnapshots";
 import { themeAccent, type ThemeMode } from "../dashboardPrimitives";
-import type { CourseRec, GoalId } from "./goalPathData";
-import { ROADMAPS, coursesForGoalStep } from "./goalPathData";
+import type { GoalId } from "./goalPathData";
+import { ROADMAPS } from "./goalPathData";
 import { PathSelector } from "./PathSelector";
-import { RoadmapFlow } from "./RoadmapFlow";
 import { CourseFlow } from "./CourseFlow";
 
 const LS_KEY = "dashboarded:goal-path-v1";
@@ -40,27 +39,6 @@ function writePersist(p: Persisted) {
   }
 }
 
-function personalizeCourses(
-  goal: GoalId,
-  stepIdx: number,
-  triple: [CourseRec, CourseRec, CourseRec],
-  courses: DashboardCourseLike[]
-): [CourseRec, CourseRec, CourseRec] {
-  if (!courses.length) return triple;
-  const step = ROADMAPS[goal][stepIdx];
-  if (!step) return triple;
-  const token =
-    step.title
-      .split(/[\s/]+/)[0]
-      ?.toLowerCase()
-      .replace(/[^a-z0-9]/g, "") ?? "";
-  if (token.length < 2) return triple;
-  const match = courses.find((c) => c.title.toLowerCase().includes(token));
-  if (!match) return triple;
-  const [a, b, c] = triple;
-  return [a, { ...b, title: match.title }, c];
-}
-
 export function GoalPathSystem({
   themeMode,
   courses,
@@ -85,28 +63,14 @@ export function GoalPathSystem({
     setPersist((p) => ({ ...p, goal: g }));
   }, []);
 
-  const completeStep = useCallback(() => {
-    setPersist((p) => {
-      const g = p.goal;
-      const idx = p.stepByGoal[g] ?? 0;
-      if (idx >= ROADMAPS[g].length) return p;
-      return { ...p, stepByGoal: { ...p.stepByGoal, [g]: idx + 1 } };
-    });
-  }, []);
-
   const courseStepIdx = Math.min(currentIndex, Math.max(0, maxLen - 1));
-  const courseTriple = useMemo(() => {
-    const row = coursesForGoalStep(goal, courseStepIdx);
-    const t: [CourseRec, CourseRec, CourseRec] = [row[0]!, row[1]!, row[2]!];
-    return personalizeCourses(goal, courseStepIdx, t, courses);
-  }, [goal, courseStepIdx, courses]);
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, ease: "easeOut" }}
-      className="cut-frame cyber-frame gold-stroke relative w-full min-w-0 max-w-none overflow-hidden border border-[rgba(197,179,88,0.32)] bg-[#050505]/90 p-4 backdrop-blur-[12px] sm:p-5 md:p-7"
+      className="cut-frame cyber-frame gold-stroke relative w-full min-w-0 max-w-none overflow-hidden border border-[rgba(197,179,88,0.32)] bg-[#050505]/90 fluid-shell-p backdrop-blur-[12px]"
       style={{
         borderColor: t.border,
         boxShadow: `0 0 0 1px ${t.glow}, 0 0 48px rgba(250,204,21,0.06), 0 24px 80px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,215,0,0.06)`
@@ -117,20 +81,10 @@ export function GoalPathSystem({
         aria-hidden
       />
       <div className="relative">
-        <header className="border-b border-[rgba(197,179,88,0.2)] pb-4 sm:pb-5">
-          <div className="font-mono text-[10px] font-black uppercase tracking-[0.28em] text-[color:var(--gold-neon)] sm:text-[11px] sm:tracking-[0.3em]">
-            Goal-based path
-          </div>
-          <p className="mt-2 max-w-2xl text-[13px] leading-relaxed text-white/72 sm:text-[14px]">
-            Clear milestones, guided courses, earning cues — minimal, premium progression.
-          </p>
-        </header>
-
-        <div className="mt-5 sm:mt-6">
+        <div className="sm:mt-1">
           <PathSelector selected={goal} onSelect={setGoal} />
         </div>
-        <RoadmapFlow goal={goal} currentIndex={currentIndex} onCompleteStep={completeStep} />
-        <CourseFlow courses={courseTriple} onNavigate={onNavigate} />
+        <CourseFlow goal={goal} courses={courses} userStepIndex={courseStepIdx} onNavigate={onNavigate} />
       </div>
     </motion.div>
   );

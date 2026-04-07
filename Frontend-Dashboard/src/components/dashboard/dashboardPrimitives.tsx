@@ -77,8 +77,8 @@ export function Card({
       className={cn(
         "dashboard-card cyber-corners group relative overflow-hidden border transition",
         shell
-          ? "cut-frame cyber-frame gold-stroke w-full max-w-none border-[rgba(197,179,88,0.28)] bg-[#060606]/82 p-5 opacity-100 backdrop-blur-[12px] sm:p-6 md:p-7 lg:p-8"
-          : "bg-[rgba(10,10,10,0.70)] p-4 opacity-70 backdrop-blur-[12px] hover:opacity-100",
+          ? "cut-frame cyber-frame gold-stroke w-full max-w-none border-[rgba(197,179,88,0.28)] bg-[#060606]/82 p-[var(--fluid-card-p-shell)] opacity-100 backdrop-blur-[12px]"
+          : "bg-[rgba(10,10,10,0.70)] p-[var(--fluid-card-p)] opacity-70 backdrop-blur-[12px] hover:opacity-100",
         className
       )}
       style={
@@ -121,8 +121,8 @@ export function Card({
       >
         <div
           className={cn(
-            "min-w-0 font-mono font-extrabold uppercase tracking-[0.2em] text-white/88 group-hover:text-white/95",
-            shell ? "text-[12px] sm:text-[14px] md:text-[15px]" : "text-[12px]"
+            "min-w-0 font-extrabold uppercase tracking-[0.2em] text-white/88 group-hover:text-white/95",
+            shell ? "fluid-text-ui-sm" : "fluid-text-ui-sm"
           )}
         >
           {title}
@@ -143,7 +143,7 @@ export function Card({
           <div className="pointer-events-none absolute inset-0" style={{ boxShadow: `inset 0 0 0 1px ${(a?.border ?? t.border)}` }} />
         </div>
       ) : null}
-      <div className={cn("relative", shell ? "mt-4 md:mt-5" : "mt-3")}>{children}</div>
+      <div className={cn("relative", shell ? "mt-[clamp(0.85rem,2vw+0.25rem,1.35rem)]" : "mt-[clamp(0.65rem,1.5vw+0.2rem,1rem)]")}>{children}</div>
     </motion.div>
   );
 }

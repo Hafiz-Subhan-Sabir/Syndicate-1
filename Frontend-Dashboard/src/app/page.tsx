@@ -1,15 +1,17 @@
 "use client";
 
+import { createPortal } from "react-dom";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
+import type { CSSProperties } from "react";
 import gsap from "gsap";
 import { AnimatePresence, motion } from "framer-motion";
 import ChromaGrid, { type ChromaItem } from "../components/ChromaGrid";
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import DashboardControlCenter from "../components/dashboard/DashboardControlCenter";
-import { ProgramPromoEmbed } from "../components/ProgramPromoEmbed";
 import { useGoalsPanel } from "@/contexts/GoalsPanelContext";
 import { GoalsPanel } from "@/components/ui/GoalsPanel";
 import { SyndicateAiChallengePanel } from "../components/SyndicateAiChallengePanel";
+import { MembershipContentHub } from "../components/membership/MembershipContentHub";
 
 type NavItem = { label: string; key: string; active?: boolean };
 type Course = {
@@ -106,20 +108,20 @@ function CheckboxSlot({ active }: { active?: boolean }) {
   return (
     <div
       className={cn(
-        "relative h-[18px] w-[18px] shrink-0 rounded-[5px] border md:h-[22px] md:w-[22px] md:rounded-[6px]",
+        "sidebar-nav-checkbox relative shrink-0 border",
         active ? "border-[rgba(255,90,90,0.82)]" : "border-white/10"
       )}
     >
       <span
         className={cn(
-          "absolute left-1/2 top-1/2 h-[8px] w-[8px] -translate-x-1/2 -translate-y-1/2 rounded-[2px] opacity-0 transition md:h-[10px] md:w-[10px] md:rounded-[3px]",
+          "sidebar-nav-checkbox-dot absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0 transition",
           active &&
             "opacity-100 [background:linear-gradient(135deg,rgba(255,215,0,0.95),rgba(255,59,59,0.9))] [box-shadow:0_0_18px_rgba(255,59,59,0.28)]"
         )}
       />
       <span
         className={cn(
-          "absolute inset-0 rounded-[6px] opacity-0 transition",
+          "sidebar-nav-checkbox-ring absolute inset-0 opacity-0 transition",
           active && "opacity-100 [box-shadow:0_0_0_1px_rgba(255,59,59,0.52),0_0_22px_rgba(255,59,59,0.22)]"
         )}
       />
@@ -128,7 +130,7 @@ function CheckboxSlot({ active }: { active?: boolean }) {
 }
 
 function NavIcon({ k }: { k: string }) {
-  const base = "h-[18px] w-[18px]";
+  const base = "sidebar-nav-icon-svg";
   switch (k) {
     case "dashboard":
       return (
@@ -963,22 +965,12 @@ function UserDashboardPanel({
                     Resume & Continue
                   </button>
                 </div>
-                <ProgramPromoEmbed
-                  title="Continue your program — video briefing"
-                  className="mt-4"
-                  maxWidthClass="max-w-full"
-                />
               </>
             ) : (
               <>
                 <div className="mt-3 text-[12px] leading-relaxed text-white/65">
                   You haven’t started a program yet. Hit resume when you pick one from the Courses section.
                 </div>
-                <ProgramPromoEmbed
-                  title="Programs introduction — pick a track to begin"
-                  className="mt-4"
-                  maxWidthClass="max-w-full"
-                />
               </>
             )}
           </div>
@@ -1288,25 +1280,25 @@ function InstructorSlideshow() {
     <div
       ref={wrapRef}
       data-anim="in"
-      className="cut-frame cyber-frame gold-stroke glass-dark hero-gold-frame hero-pulse-soft relative overflow-hidden p-4 sm:p-5"
+      className="cut-frame cyber-frame gold-stroke glass-dark hero-gold-frame hero-pulse-soft relative overflow-hidden p-[var(--fluid-deck-p)]"
     >
       <div className="hero-gold-overlay absolute inset-0 opacity-70" />
-      <div className="relative grid grid-cols-1 gap-6 lg:grid-cols-2 lg:gap-8 lg:items-center">
-        <div className="flex min-w-0 flex-col gap-5">
-          <div className="space-y-4" aria-live="polite" aria-atomic="true">
+      <div className="relative grid grid-cols-1 gap-[clamp(1rem,2.5vw+0.5rem,2rem)] lg:grid-cols-2 lg:items-center">
+        <div className="flex min-w-0 flex-col gap-[clamp(0.85rem,2vw+0.25rem,1.35rem)]">
+          <div className="space-y-[clamp(0.65rem,1.5vw+0.2rem,1rem)]" aria-live="polite" aria-atomic="true">
             <div>
-              <div className="text-[10px] font-black uppercase tracking-[0.2em] text-white/45">Program</div>
-              <div className="mt-1.5 text-[18px] font-black uppercase leading-snug tracking-[0.08em] text-[color:var(--gold)]/95 sm:text-[20px]">
+              <div className="fluid-text-ui-xs font-black uppercase tracking-[0.2em] text-white/45">Program</div>
+              <div className="mt-1.5 text-[clamp(1rem,1.8vw+0.55rem,1.35rem)] font-black uppercase leading-snug tracking-[0.08em] text-[color:var(--gold)]/95">
                 {active.programName}
               </div>
             </div>
             <div>
-              <div className="text-[10px] font-black uppercase tracking-[0.2em] text-white/45">Instructor</div>
-              <div className="mt-1.5 text-[14px] font-extrabold uppercase tracking-[0.12em] text-white/88 sm:text-[15px]">
+              <div className="fluid-text-ui-xs font-black uppercase tracking-[0.2em] text-white/45">Instructor</div>
+              <div className="mt-1.5 text-[clamp(0.78rem,0.6vw+0.55rem,1rem)] font-extrabold uppercase tracking-[0.12em] text-white/88">
                 {active.instructorName}
               </div>
             </div>
-            <p className="text-[12px] leading-relaxed text-white/68 sm:text-[13px]">{active.description}</p>
+            <p className="text-[clamp(0.68rem,0.45vw+0.55rem,0.88rem)] leading-relaxed text-white/68">{active.description}</p>
           </div>
 
           <div className="flex flex-wrap items-center gap-2 pt-1" role="tablist" aria-label="Instructor slides">
@@ -1329,7 +1321,7 @@ function InstructorSlideshow() {
           </div>
         </div>
 
-        <div className="relative min-h-[260px] w-full overflow-hidden rounded-lg border border-white/10 bg-black/80 sm:min-h-[300px] md:min-h-[340px] lg:min-h-[360px]">
+        <div className="relative min-h-[var(--fluid-instructor-media-minh)] w-full overflow-hidden rounded-lg border border-white/10 bg-black/80">
           <div className="absolute inset-0 opacity-85 [background:linear-gradient(180deg,rgba(0,0,0,0.35),rgba(0,0,0,0.55))]" />
           {slides.map((slide, i) => (
             <div
@@ -1383,6 +1375,9 @@ export default function Page() {
   const topbarRef = useRef<HTMLDivElement | null>(null);
   const featuresSearchBtnRef = useRef<HTMLButtonElement | null>(null);
   const featuresMenuPanelRef = useRef<HTMLDivElement | null>(null);
+  const [overlayMount, setOverlayMount] = useState(false);
+  const [featuresMenuFixedStyle, setFeaturesMenuFixedStyle] = useState<CSSProperties | null>(null);
+  const [profileMenuFixedStyle, setProfileMenuFixedStyle] = useState<CSSProperties | null>(null);
 
   const nav: NavItem[] = useMemo(
     () => [
@@ -1449,6 +1444,61 @@ export default function Page() {
   const [featuresMenuOpen, setFeaturesMenuOpen] = useState(false);
   const [featureSearchQuery, setFeatureSearchQuery] = useState("");
 
+  /** Fixed-position overlays portaled to document.body — float above main/instructor without affecting navbar size. */
+  useLayoutEffect(() => {
+    if (!overlayMount) return;
+    const GAP = 8;
+    const pad = 8;
+    const z = 130;
+
+    const update = () => {
+      if (featuresMenuOpen && featuresSearchBtnRef.current) {
+        const r = featuresSearchBtnRef.current.getBoundingClientRect();
+        const w = Math.min(window.innerWidth * 0.92, 320);
+        let left = r.right - w;
+        left = Math.max(pad, Math.min(left, window.innerWidth - w - pad));
+        setFeaturesMenuFixedStyle({
+          position: "fixed",
+          top: r.bottom + GAP,
+          left,
+          width: w,
+          zIndex: z
+        });
+      } else {
+        setFeaturesMenuFixedStyle(null);
+      }
+
+      if (profileOpen && profileBtnRef.current) {
+        const r = profileBtnRef.current.getBoundingClientRect();
+        const w = Math.min(window.innerWidth * 0.92, 360);
+        let left: number;
+        if (window.innerWidth < 640) {
+          left = r.left + r.width / 2 - w / 2;
+        } else {
+          left = r.right - w;
+        }
+        left = Math.max(pad, Math.min(left, window.innerWidth - w - pad));
+        setProfileMenuFixedStyle({
+          position: "fixed",
+          top: r.bottom + GAP,
+          left,
+          width: w,
+          zIndex: z
+        });
+      } else {
+        setProfileMenuFixedStyle(null);
+      }
+    };
+
+    update();
+    window.addEventListener("resize", update);
+    document.addEventListener("scroll", update, true);
+    return () => {
+      window.removeEventListener("resize", update);
+      document.removeEventListener("scroll", update, true);
+    };
+  }, [overlayMount, featuresMenuOpen, profileOpen]);
+
   useEffect(() => {
     setShellSectionKey(selectedNavKey);
   }, [selectedNavKey, setShellSectionKey]);
@@ -1469,6 +1519,10 @@ export default function Page() {
     apply();
     mq.addEventListener("change", apply);
     return () => mq.removeEventListener("change", apply);
+  }, []);
+
+  useEffect(() => {
+    setOverlayMount(true);
   }, []);
 
   /** Mobile (max-width 767px): auto-collapse sidebar 2s after it opens (including initial load). */
@@ -1948,7 +2002,7 @@ export default function Page() {
     } else {
       gsap.to(btn, { scale: 1, duration: 0.18, ease: "power2.out", transformOrigin: "100% 0%" });
     }
-  }, [profileOpen]);
+  }, [profileOpen, profileMenuFixedStyle]);
 
   useLayoutEffect(() => {
     if (!rootRef.current) return;
@@ -2003,15 +2057,15 @@ export default function Page() {
         </video>
       </div>
       <div className="hud-ambient-glow" aria-hidden="true" />
-      <div className="relative flex min-h-screen w-full max-w-[100vw] flex-col px-1.5 pb-2 sm:px-2 md:px-3 md:pb-3 lg:px-4 lg:h-full">
+      <div className="relative flex min-h-screen w-full max-w-[100vw] flex-col fluid-page-px fluid-page-pb lg:h-full">
         {/* Sticky shell has no GSAP transform; inner bar uses data-anim (transform breaks sticky on same node). */}
         <div className="sticky top-0 z-[60] w-full max-w-full shrink-0">
           <div
             ref={topbarRef}
             data-anim="in"
             className={cn(
-              "shell-neon-yellow cut-frame cyber-frame gold-stroke-strong premium-navbar overflow-visible border bg-[#070707]/80 py-2.5 pl-1 pr-2.5 sm:py-2.5 sm:pl-1.5 sm:pr-4 md:py-3.5 md:pl-2 md:pr-5",
-              "flex items-center justify-between gap-2 sm:gap-3 md:gap-5 lg:overflow-hidden"
+              "shell-neon-yellow cut-frame cyber-frame gold-stroke-strong premium-navbar overflow-visible border bg-[#070707]/80 fluid-nav-py fluid-nav-pl fluid-nav-pr",
+              "flex items-center justify-between fluid-nav-gap lg:overflow-visible"
             )}
           >
           <div className="absolute inset-0 opacity-80 [background:radial-gradient(900px_280px_at_30%_0%,rgba(250,204,21,0.14),rgba(0,0,0,0)_55%)]" />
@@ -2023,7 +2077,7 @@ export default function Page() {
             onMouseLeave={() => {
               topMouseX.current = Infinity;
             }}
-            className="relative flex min-w-0 flex-1 items-center gap-1 sm:gap-1.5 md:gap-2"
+            className="relative flex min-w-0 flex-1 items-center fluid-dock-gap"
           >
             <button
               type="button"
@@ -2042,8 +2096,8 @@ export default function Page() {
                 className={cn(
                   "logo-glow-shell cut-frame-sm cyber-frame gold-stroke relative z-[1] mx-auto grid w-full max-w-[min(100%,188px)] place-items-center overflow-hidden sm:mx-0 sm:max-w-[200px] md:max-w-[218px]",
                   "border border-[color:var(--gold-neon-border-mid)] bg-black/70",
-                  "px-1.5 py-0.5 sm:px-2 sm:py-1 md:px-2.5 md:py-1.5",
-                  "min-h-[36px] sm:min-h-[46px] md:min-h-[60px] lg:min-h-[68px]"
+                  "px-[clamp(0.35rem,1vw+0.1rem,0.65rem)] py-[clamp(0.15rem,0.5vw+0.05rem,0.45rem)]",
+                  "min-h-[var(--fluid-logo-min-h)]"
                 )}
               >
                 <img
@@ -2057,13 +2111,19 @@ export default function Page() {
               </button>
             </div>
           </div>
-          <div className="relative flex shrink-0 items-center gap-1.5 sm:gap-2.5 md:gap-3">
-            <div className="relative flex items-center justify-end gap-1.5 sm:gap-2.5">
+          <div className="relative flex shrink-0 items-center fluid-nav-gap">
+            <div className="relative flex items-center justify-end fluid-nav-gap">
               <div className="relative">
                 <button
                   ref={featuresSearchBtnRef}
                   type="button"
-                  onClick={() => setFeaturesMenuOpen((v) => !v)}
+                  onClick={() => {
+                    setFeaturesMenuOpen((v) => {
+                      const next = !v;
+                      if (next) setProfileOpen(false);
+                      return next;
+                    });
+                  }}
                   className={cn(
                     "navbar-chrome-btn cut-frame-sm cyber-frame gold-stroke grid h-8 w-8 place-items-center border bg-black/70 text-[color:var(--gold-neon)]/95 sm:h-9 sm:w-9 md:h-10 md:w-10",
                     featuresMenuOpen && "hud-selected-glow border-[color:var(--gold-neon-border)]"
@@ -2082,60 +2142,6 @@ export default function Page() {
                   </svg>
                 </button>
 
-                {featuresMenuOpen ? (
-                  <div
-                    ref={featuresMenuPanelRef}
-                    className="cut-frame cyber-frame gold-stroke glass-dark absolute right-0 top-full z-50 mt-2 w-[min(92vw,320px)] overflow-hidden border border-[color:var(--gold-neon-border-mid)] p-3 shadow-[0_0_24px_rgba(250,204,21,0.12)] sm:p-4"
-                    role="menu"
-                  >
-                    <div className="absolute inset-0 opacity-70 [background:radial-gradient(520px_220px_at_20%_0%,rgba(250,204,21,0.1),rgba(0,0,0,0)_62%)]" />
-                    <div className="relative">
-                      <div className="text-[10px] font-extrabold uppercase tracking-[0.22em] text-white/50">Find & navigate</div>
-                      <input
-                        type="search"
-                        value={featureSearchQuery}
-                        onChange={(e) => setFeatureSearchQuery(e.target.value)}
-                        placeholder="Filter features…"
-                        className="mt-2 w-full rounded-md border border-white/12 bg-black/40 px-3 py-2 text-[12px] text-white/85 placeholder:text-white/35 outline-none focus:border-[rgba(255,215,0,0.45)]"
-                        autoFocus
-                      />
-                      <div className="mt-3 max-h-[min(52vh,360px)] space-y-4 overflow-y-auto pr-1 no-scrollbar">
-                        {featureMenuGrouped.length === 0 ? (
-                          <div className="text-[12px] text-white/50">No matches.</div>
-                        ) : (
-                          featureMenuGrouped.map(([section, entries]) => (
-                            <div key={section}>
-                              <div className="text-[9px] font-black uppercase tracking-[0.2em] text-white/40">{section}</div>
-                              <div className="mt-1.5 space-y-1">
-                                {entries.map((entry, i) => (
-                                  <button
-                                    key={`${section}-${entry.type}-${i}`}
-                                    type="button"
-                                    role="menuitem"
-                                    onClick={() => {
-                                      if (entry.type === "nav") {
-                                        setSelectedNavKey(entry.navKey);
-                                      } else {
-                                        setThemeMode(entry.mode);
-                                      }
-                                      setFeaturesMenuOpen(false);
-                                    }}
-                                    className={cn(
-                                      "flex w-full rounded-md border border-white/10 bg-black/30 px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-[0.1em] text-white/75 transition hover:border-[rgba(255,215,0,0.35)] hover:bg-black/50 hover:text-white/90",
-                                      entry.type === "theme" && themeMode === entry.mode && "border-[rgba(255,215,0,0.45)] text-[color:var(--gold)]/95"
-                                    )}
-                                  >
-                                    {entry.label}
-                                  </button>
-                                ))}
-                              </div>
-                            </div>
-                          ))
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ) : null}
               </div>
 
               {/* Profile / Avatar button */}
@@ -2144,10 +2150,16 @@ export default function Page() {
                   ref={profileBtnRef}
                   data-dock-item="top"
                   type="button"
-                  onClick={() => setProfileOpen((v) => !v)}
+                  onClick={() => {
+                    setProfileOpen((v) => {
+                      const next = !v;
+                      if (next) setFeaturesMenuOpen(false);
+                      return next;
+                    });
+                  }}
                   className={cn(
-                    "navbar-chrome-panel cut-frame-sm cyber-frame gold-stroke glass-dark premium-button inline-flex w-full max-w-[min(100%,188px)] items-center gap-1.5 rounded-md border px-1.5 py-0.5 sm:mx-0 sm:max-w-[200px] sm:gap-2 sm:px-2 sm:py-1 md:max-w-[218px] md:px-2.5 md:py-1.5",
-                    "min-h-[36px] h-[36px] sm:min-h-[46px] sm:h-[46px] md:min-h-[60px] md:h-[60px] lg:min-h-[68px] lg:h-[68px]",
+                    "navbar-chrome-panel cut-frame-sm cyber-frame gold-stroke glass-dark premium-button inline-flex w-full max-w-[min(100%,188px)] items-center gap-[clamp(0.35rem,1vw+0.1rem,0.55rem)] rounded-md border px-[clamp(0.35rem,1vw+0.1rem,0.65rem)] py-[clamp(0.15rem,0.45vw+0.08rem,0.45rem)] sm:mx-0 sm:max-w-[200px] md:max-w-[218px]",
+                    "min-h-[var(--fluid-profile-btn-h)] h-[var(--fluid-profile-btn-h)]",
                     "will-change-transform",
                     profileOpen && "hud-selected-glow"
                   )}
@@ -2175,100 +2187,160 @@ export default function Page() {
                   </div>
                 </button>
 
-                {profileOpen ? (
-                  <div
-                    ref={profilePanelRef}
-                    className="cut-frame cyber-frame gold-stroke glass-dark premium-gold-border absolute left-1/2 top-full z-50 mt-2 w-[min(92vw,360px)] -translate-x-1/2 overflow-hidden p-3 sm:left-auto sm:right-0 sm:mt-2 sm:translate-x-0 sm:p-4"
-                    role="menu"
-                  >
-                    <div className="absolute inset-0 opacity-70 [background:radial-gradient(620px_260px_at_20%_0%,rgba(0,255,255,0.10),rgba(0,0,0,0)_62%)]" />
-                    <div className="relative">
-                      <div className="flex items-center justify-between gap-3">
-                        <div className="text-[11px] font-extrabold uppercase tracking-[0.22em] text-white/55">
-                          Choose Avatar
-                        </div>
-                        <div className="text-[10px] font-extrabold uppercase tracking-[0.22em] text-white/40">
-                          Presets · upload
-                        </div>
-                      </div>
-
-                      <input
-                        ref={profileAvatarInputRef}
-                        type="file"
-                        accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
-                        className="sr-only"
-                        tabIndex={-1}
-                        aria-hidden
-                        onChange={onProfileAvatarFile}
-                      />
-
-                      <div className="mt-4 grid grid-cols-3 gap-3">
-                        {["a", "b", "c", "d", "e", "f"].map((k) => {
-                          const src = `/assets/${k}.webp`;
-                          const isOn = profileAvatar === src;
-                          return (
-                            <button
-                              key={k}
-                              type="button"
-                              onClick={() => persistProfileAvatar(src)}
-                              className={cn(
-                                "cut-frame-sm cyber-frame gold-stroke hud-hover-glow glass-dark premium-gold-border relative aspect-square overflow-hidden transition",
-                                "hover:border-[rgba(255,215,0,0.62)]",
-                                isOn && "hud-selected-glow border-[rgba(255,215,0,0.82)]"
-                              )}
-                              aria-label={`Select avatar ${k}`}
-                            >
-                              <img
-                                src={src}
-                                alt=""
-                                className="h-full w-full object-cover opacity-90"
-                                onError={(e) => {
-                                  (e.currentTarget as HTMLImageElement).style.display = "none";
-                                }}
-                              />
-                              {isOn ? (
-                                <span className="absolute left-2 top-2 rounded-md border border-[rgba(0,255,255,0.35)] bg-black/60 px-2 py-1 text-[10px] font-black uppercase tracking-[0.22em] text-[rgba(0,255,255,0.9)]">
-                                  On
-                                </span>
-                              ) : null}
-                            </button>
-                          );
-                        })}
-                      </div>
-
-                      {profileAvatar.startsWith("data:") ? (
-                        <div className="mt-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-[rgba(0,255,255,0.55)">
-                          Custom photo from your device
-                        </div>
-                      ) : null}
-
-                      <div className="mt-4 flex items-center justify-between gap-3">
-                        <button
-                          type="button"
-                          onClick={() => profileAvatarInputRef.current?.click()}
-                          aria-label="Upload profile picture from your device"
-                          className="cut-frame-sm cyber-frame gold-stroke hud-hover-glow glass-dark premium-gold-border premium-button inline-flex items-center justify-center px-4 py-3 text-[11px] font-black uppercase tracking-[0.22em] text-[color:var(--gold)]/92 transition hover:border-[rgba(255,215,0,0.62)] hover:text-[rgba(255,215,0,0.95)]"
-                        >
-                          Upload from PC
-                        </button>
-                        <button
-                          type="button"
-                          className="cut-frame-sm cyber-frame gold-stroke hud-hover-glow inline-flex items-center justify-center border border-[rgba(255,255,255,0.14)] bg-black/35 px-4 py-3 text-[11px] font-black uppercase tracking-[0.22em] text-white/70 transition hover:border-[rgba(255,0,0,0.34)] hover:text-[rgba(255,0,0,0.88)] hover:[box-shadow:0_0_0_1px_rgba(255,0,0,0.20),0_0_44px_rgba(255,0,0,0.12)]"
-                        >
-                          Logout
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ) : null}
               </div>
             </div>
           </div>
           </div>
         </div>
 
+        {overlayMount && featuresMenuOpen && featuresMenuFixedStyle
+          ? createPortal(
+              <div
+                ref={featuresMenuPanelRef}
+                style={featuresMenuFixedStyle}
+                className="compact-card-ui cut-frame cyber-frame gold-stroke glass-dark pointer-events-auto overflow-hidden border border-[color:var(--gold-neon-border-mid)] p-3 shadow-[0_0_24px_rgba(250,204,21,0.12)] sm:p-4"
+                role="menu"
+              >
+                <div className="absolute inset-0 opacity-70 [background:radial-gradient(520px_220px_at_20%_0%,rgba(250,204,21,0.1),rgba(0,0,0,0)_62%)]" />
+                <div className="relative">
+                  <div className="text-[10px] font-extrabold uppercase tracking-[0.22em] text-white/50">Find & navigate</div>
+                  <input
+                    type="search"
+                    value={featureSearchQuery}
+                    onChange={(e) => setFeatureSearchQuery(e.target.value)}
+                    placeholder="Filter features…"
+                    className="mt-2 w-full rounded-md border border-white/12 bg-black/40 px-3 py-2 text-[12px] text-white/85 placeholder:text-white/35 outline-none focus:border-[rgba(255,215,0,0.45)]"
+                    autoFocus
+                  />
+                  <div className="mt-3 max-h-[min(52vh,360px)] space-y-4 overflow-y-auto pr-1 no-scrollbar">
+                    {featureMenuGrouped.length === 0 ? (
+                      <div className="text-[12px] text-white/50">No matches.</div>
+                    ) : (
+                      featureMenuGrouped.map(([section, entries]) => (
+                        <div key={section}>
+                          <div className="text-[9px] font-black uppercase tracking-[0.2em] text-white/40">{section}</div>
+                          <div className="mt-1.5 space-y-1">
+                            {entries.map((entry, i) => (
+                              <button
+                                key={`${section}-${entry.type}-${i}`}
+                                type="button"
+                                role="menuitem"
+                                onClick={() => {
+                                  if (entry.type === "nav") {
+                                    setSelectedNavKey(entry.navKey);
+                                  } else {
+                                    setThemeMode(entry.mode);
+                                  }
+                                  setFeaturesMenuOpen(false);
+                                }}
+                                className={cn(
+                                  "flex w-full rounded-md border border-white/10 bg-black/30 px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-[0.1em] text-white/75 transition hover:border-[rgba(255,215,0,0.35)] hover:bg-black/50 hover:text-white/90",
+                                  entry.type === "theme" && themeMode === entry.mode && "border-[rgba(255,215,0,0.45)] text-[color:var(--gold)]/95"
+                                )}
+                              >
+                                {entry.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </div>,
+              document.body
+            )
+          : null}
+
+        {overlayMount && profileOpen && profileMenuFixedStyle
+          ? createPortal(
+              <div
+                ref={profilePanelRef}
+                style={profileMenuFixedStyle}
+                className="compact-card-ui cut-frame cyber-frame gold-stroke glass-dark premium-gold-border pointer-events-auto overflow-hidden p-3 sm:p-4"
+                role="menu"
+              >
+                <div className="absolute inset-0 opacity-70 [background:radial-gradient(620px_260px_at_20%_0%,rgba(0,255,255,0.10),rgba(0,0,0,0)_62%)]" />
+                <div className="relative">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="text-[11px] font-extrabold uppercase tracking-[0.22em] text-white/55">Choose Avatar</div>
+                    <div className="text-[10px] font-extrabold uppercase tracking-[0.22em] text-white/40">Presets · upload</div>
+                  </div>
+
+                  <input
+                    ref={profileAvatarInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
+                    className="sr-only"
+                    tabIndex={-1}
+                    aria-hidden
+                    onChange={onProfileAvatarFile}
+                  />
+
+                  <div className="mt-4 grid grid-cols-3 gap-3">
+                    {["a", "b", "c", "d", "e", "f"].map((k) => {
+                      const src = `/assets/${k}.webp`;
+                      const isOn = profileAvatar === src;
+                      return (
+                        <button
+                          key={k}
+                          type="button"
+                          onClick={() => persistProfileAvatar(src)}
+                          className={cn(
+                            "cut-frame-sm cyber-frame gold-stroke hud-hover-glow glass-dark premium-gold-border relative aspect-square overflow-hidden transition",
+                            "hover:border-[rgba(255,215,0,0.62)]",
+                            isOn && "hud-selected-glow border-[rgba(255,215,0,0.82)]"
+                          )}
+                          aria-label={`Select avatar ${k}`}
+                        >
+                          <img
+                            src={src}
+                            alt=""
+                            className="h-full w-full object-cover opacity-90"
+                            onError={(e) => {
+                              (e.currentTarget as HTMLImageElement).style.display = "none";
+                            }}
+                          />
+                          {isOn ? (
+                            <span className="absolute left-2 top-2 rounded-md border border-[rgba(0,255,255,0.35)] bg-black/60 px-2 py-1 text-[10px] font-black uppercase tracking-[0.22em] text-[rgba(0,255,255,0.9)]">
+                              On
+                            </span>
+                          ) : null}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {profileAvatar.startsWith("data:") ? (
+                    <div className="mt-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-[rgba(0,255,255,0.55)">
+                      Custom photo from your device
+                    </div>
+                  ) : null}
+
+                  <div className="mt-4 flex items-center justify-between gap-3">
+                    <button
+                      type="button"
+                      onClick={() => profileAvatarInputRef.current?.click()}
+                      aria-label="Upload profile picture from your device"
+                      className="cut-frame-sm cyber-frame gold-stroke hud-hover-glow glass-dark premium-gold-border premium-button inline-flex items-center justify-center px-4 py-3 text-[11px] font-black uppercase tracking-[0.22em] text-[color:var(--gold)]/92 transition hover:border-[rgba(255,215,0,0.62)] hover:text-[rgba(255,215,0,0.95)]"
+                    >
+                      Upload from PC
+                    </button>
+                    <button
+                      type="button"
+                      className="cut-frame-sm cyber-frame gold-stroke hud-hover-glow inline-flex items-center justify-center border border-[rgba(255,255,255,0.14)] bg-black/35 px-4 py-3 text-[11px] font-black uppercase tracking-[0.22em] text-white/70 transition hover:border-[rgba(255,0,0,0.34)] hover:text-[rgba(255,0,0,0.88)] hover:[box-shadow:0_0_0_1px_rgba(255,0,0,0.20),0_0_44px_rgba(255,0,0,0.12)]"
+                    >
+                      Logout
+                    </button>
+                  </div>
+                </div>
+              </div>,
+              document.body
+            )
+          : null}
+
         {/* Main frame */}
-        <div className="mt-0 grid min-h-0 w-full max-w-none flex-1 grid-cols-12 gap-1.5 max-md:items-start pt-2 sm:gap-2 sm:pt-3 md:gap-3 md:pt-3 lg:gap-4">
+        <div className="mt-0 grid min-h-0 w-full max-w-none flex-1 grid-cols-12 fluid-main-grid max-md:items-start">
           {/* Sidebar */}
           {sidebarOpen ? (
             <aside
@@ -2281,27 +2353,21 @@ export default function Page() {
                 dockMouseY.current = Infinity;
               }}
               className={cn(
-                "shell-neon-yellow cut-frame cyber-frame gold-stroke relative col-span-5 overflow-hidden border bg-[#060606]/70 md:col-span-2 lg:col-span-2",
+                "sidebar-nav-dock shell-neon-yellow cut-frame cyber-frame gold-stroke relative col-span-5 overflow-hidden border bg-[#060606]/70 md:col-span-2 lg:col-span-2",
                 "max-md:max-h-[min(calc(100dvh-4.5rem),92vh)] max-md:self-start max-md:overflow-y-auto max-md:overflow-x-hidden",
-                "p-1.5 sm:p-2.5 md:p-3",
                 "h-auto max-h-none md:overflow-visible lg:sticky lg:top-0 lg:h-full lg:max-h-none lg:overflow-auto no-scrollbar"
               )}
             >
               <div className="absolute inset-0 opacity-70 [background:radial-gradient(680px_320px_at_20%_10%,rgba(250,204,21,0.1),rgba(0,0,0,0)_62%)]" />
-              <div className="relative pb-4 md:pb-6">
-                <div className="mb-2 flex items-center justify-between md:mb-3">
-                  <div className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-white/60 md:text-[13px] md:tracking-[0.22em]">
-                    Nav
-                  </div>
-                </div>
-                <div className="space-y-1 md:space-y-1.5">
-                {nav.map((item, i) => (
+              <div className="relative min-w-0">
+                <div className="sidebar-nav-list">
+                {nav.map((item) => (
                   <button
                     key={item.label}
                     onClick={() => setSelectedNavKey(item.key)}
                     data-dock-item="sidebar"
                     className={cn(
-                      "nav-item group relative flex w-full items-center gap-1.5 px-1.5 py-1.5 text-left md:gap-3 md:px-3 md:py-2",
+                      "sidebar-nav-item nav-item group relative flex w-full items-center text-left",
                       "cut-frame-sm hud-hover-glow glass-dark premium-gold-border gold-glow-hover transition",
                       "hover:bg-black/45",
                       selectedNavKey === item.key &&
@@ -2310,14 +2376,14 @@ export default function Page() {
                     type="button"
                   >
                     <CheckboxSlot active={selectedNavKey === item.key} />
-                    <span className="grid h-6 w-6 shrink-0 place-items-center rounded-md border border-[color:var(--gold-neon-border-soft)] bg-black/25 text-[color:var(--gold-neon)]/90 group-hover:text-[color:var(--gold-neon)] md:h-7 md:w-7">
+                    <span className="sidebar-nav-icon-frame grid shrink-0 place-items-center border border-[color:var(--gold-neon-border-soft)] bg-black/25 text-[color:var(--gold-neon)]/90 group-hover:text-[color:var(--gold-neon)]">
                       <NavIcon k={item.key} />
                     </span>
-                    <span className="nav-label min-w-0 flex-1 text-[9px] font-extrabold uppercase leading-tight tracking-[0.06em] text-[color:var(--gold-neon)]/92 group-hover:text-[color:var(--gold-neon)] sm:text-[10px] md:text-[13px] md:tracking-[0.12em] lg:text-[14px] lg:tracking-[0.14em]">
+                    <span className="sidebar-nav-label nav-label min-w-0 flex-1 font-extrabold uppercase text-[color:var(--gold-neon)]/92 group-hover:text-[color:var(--gold-neon)]">
                       <span className="nav-label-text line-clamp-2 break-words">{item.label}</span>
                       <span className="nav-glitch max-md:hidden" aria-hidden="true" />
                     </span>
-                    <span className="ml-auto hidden h-px w-[28px] shrink-0 bg-[linear-gradient(90deg,rgba(250,204,21,0),rgba(250,204,21,0.45))] opacity-0 transition group-hover:opacity-100 md:block md:w-[40px]" />
+                    <span className="sidebar-nav-accent-line ml-auto hidden h-px shrink-0 bg-[linear-gradient(90deg,rgba(250,204,21,0),rgba(250,204,21,0.45))] opacity-0 transition group-hover:opacity-100 md:block" />
                   </button>
                 ))}
                 </div>
@@ -2329,7 +2395,7 @@ export default function Page() {
           <section
             data-anim="in"
             className={cn(
-              "shell-neon-yellow cut-frame cyber-frame gold-stroke relative flex min-h-0 w-full min-w-0 max-w-none flex-col overflow-hidden border bg-[#060606]/70 p-3 sm:p-4 md:p-6 lg:p-7",
+              "shell-neon-yellow cut-frame cyber-frame gold-stroke relative flex min-h-0 w-full min-w-0 max-w-none flex-col overflow-hidden border bg-[#060606]/70 fluid-section-p",
               sidebarOpen ? "col-span-7 md:col-span-10 lg:col-span-10" : "col-span-12",
               "lg:h-full lg:min-h-0"
             )}
@@ -2342,8 +2408,8 @@ export default function Page() {
                 !sidebarOpen && "md:pl-14"
               )}
             >
-              <header className="mb-3 shrink-0 border-b border-[color:var(--gold-neon-border-mid)] pb-2 pr-1 sm:mb-4 sm:pb-3">
-                <div className="heading-glow text-[15px] font-black italic tracking-[0.02em] text-[color:var(--gold-neon)] drop-shadow-[0_0_28px_rgba(250,204,21,0.35)] min-[400px]:text-[18px] sm:text-[24px] md:text-[28px] lg:text-[34px]">
+              <header className="mb-[clamp(0.65rem,1.5vw+0.2rem,1.1rem)] shrink-0 border-b border-[color:var(--gold-neon-border-mid)] pb-[clamp(0.45rem,1.2vw+0.15rem,0.85rem)] pr-1">
+                <div className="heading-glow fluid-hero-title font-black italic tracking-[0.02em] text-[color:var(--gold-neon)] drop-shadow-[0_0_28px_rgba(250,204,21,0.35)]">
                   THE SYNDICATE
                 </div>
               </header>
@@ -2408,15 +2474,9 @@ export default function Page() {
                     ) : null}
                   </div>
 
-                  <div className="mt-8 border-t border-[rgba(197,179,88,0.15)] pt-6 pr-1">
-                    <div className="mb-3 text-[12px] font-extrabold uppercase tracking-[0.22em] text-white/55">Program briefing</div>
-                    <ProgramPromoEmbed
-                      title="Programs — course track overview video"
-                      className="w-full"
-                      maxWidthClass="max-w-4xl"
-                    />
-                  </div>
                 </>
+              ) : selectedNavKey === "resources" ? (
+                <MembershipContentHub />
               ) : selectedNavKey === "dashboard" ? (
                 <>
                   <section

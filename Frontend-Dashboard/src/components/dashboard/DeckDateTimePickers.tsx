@@ -40,6 +40,12 @@ const TONE: Record<
   }
 };
 
+function deckTriggerFocusRing(tone: Tone): string {
+  if (tone === "cyan") return "focus-visible:ring-cyan-400/55";
+  if (tone === "fuchsia") return "focus-visible:ring-fuchsia-400/55";
+  return "focus-visible:ring-[rgba(250,204,21,0.55)]";
+}
+
 export function DeckCalendarPanel({
   value,
   onSelect,
@@ -256,12 +262,13 @@ export function DeckDateField({
   tone: Tone;
 }) {
   const t = TONE[tone];
+  const triggerRing = deckTriggerFocusRing(tone);
   const wrap =
     tone === "cyan"
-      ? "border-cyan-400/38 shadow-[inset_0_1px_0_rgba(34,211,238,0.07)] focus-within:border-cyan-300/80 focus-within:shadow-[0_0_0_1px_rgba(34,211,238,0.3),0_0_22px_rgba(34,211,238,0.22)]"
+      ? "border-cyan-400/38 bg-[#050a0c] shadow-[inset_0_2px_8px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(34,211,238,0.07)] focus-within:border-cyan-300/80 focus-within:shadow-[inset_0_2px_8px_rgba(0,0,0,0.45),0_0_0_1px_rgba(34,211,238,0.3),0_0_22px_rgba(34,211,238,0.22)]"
       : tone === "fuchsia"
-        ? "border-fuchsia-400/40 shadow-[inset_0_1px_0_rgba(192,132,252,0.08)] focus-within:border-fuchsia-300/78 focus-within:shadow-[0_0_0_1px_rgba(192,132,252,0.28),0_0_22px_rgba(168,85,247,0.22)]"
-        : "border-[rgba(255,215,0,0.42)] shadow-[inset_0_1px_0_rgba(255,215,0,0.07)] focus-within:border-[rgba(255,230,120,0.78)] focus-within:shadow-[0_0_0_1px_rgba(255,215,0,0.25),0_0_24px_rgba(255,200,0,0.2)]";
+        ? "border-fuchsia-400/40 bg-[#0a060c] shadow-[inset_0_2px_8px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(192,132,252,0.08)] focus-within:border-fuchsia-300/78 focus-within:shadow-[inset_0_2px_8px_rgba(0,0,0,0.45),0_0_0_1px_rgba(192,132,252,0.28),0_0_22px_rgba(168,85,247,0.22)]"
+        : "border-[rgba(255,215,0,0.42)] bg-[#0a0906] shadow-[inset_0_2px_8px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(255,215,0,0.07)] focus-within:border-[rgba(255,230,120,0.78)] focus-within:shadow-[inset_0_2px_8px_rgba(0,0,0,0.45),0_0_0_1px_rgba(255,215,0,0.25),0_0_24px_rgba(255,200,0,0.2)]";
 
   const textTone =
     tone === "cyan" ? "text-cyan-50/95" : tone === "fuchsia" ? "text-fuchsia-50/95" : "text-[rgba(255,248,220,0.92)]";
@@ -292,7 +299,7 @@ export function DeckDateField({
       </label>
       <div
         className={cn(
-          "mt-1.5 flex min-h-[2.65rem] w-full min-w-0 items-stretch overflow-visible rounded-lg border bg-black/45",
+          "mt-1.5 flex min-h-[44px] w-full min-w-0 items-stretch overflow-visible rounded-lg border",
           wrap
         )}
       >
@@ -301,8 +308,10 @@ export function DeckDateField({
           disabled={disabled}
           onClick={() => !disabled && setOpen((o) => !o)}
           className={cn(
-            "grid w-11 shrink-0 place-items-center border-r border-white/10 bg-black/35",
-            disabled ? "cursor-not-allowed opacity-40" : "cursor-pointer hover:bg-white/5"
+            "grid min-h-[44px] min-w-[44px] shrink-0 place-items-center border-r border-white/12 bg-black/35",
+            disabled ? "cursor-not-allowed opacity-40" : "cursor-pointer hover:bg-white/8",
+            "focus-visible:z-[1] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-offset-0",
+            triggerRing
           )}
           aria-label="Open calendar"
         >
@@ -314,12 +323,14 @@ export function DeckDateField({
           disabled={disabled}
           onClick={() => !disabled && setOpen((o) => !o)}
           className={cn(
-            "min-w-0 flex-1 px-3 py-2.5 text-left text-[14px] outline-none md:text-[15px]",
+            "min-h-[44px] min-w-0 flex-1 px-3 py-2.5 text-left text-[15px] font-medium leading-snug outline-none md:text-[15px]",
             textTone,
-            disabled ? "cursor-not-allowed opacity-40" : "cursor-pointer"
+            disabled ? "cursor-not-allowed opacity-40" : "cursor-pointer",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-offset-0",
+            triggerRing
           )}
         >
-          {display || <span className="text-white/35">Select date…</span>}
+          {display || <span className="text-white/38">Select date…</span>}
         </button>
       </div>
       {open && !disabled ? (
@@ -372,12 +383,13 @@ export function DeckTimeField({
   tone: Tone;
 }) {
   const t = TONE[tone];
+  const triggerRing = deckTriggerFocusRing(tone);
   const wrap =
     tone === "cyan"
-      ? "border-cyan-400/38 shadow-[inset_0_1px_0_rgba(34,211,238,0.07)] focus-within:border-cyan-300/80 focus-within:shadow-[0_0_0_1px_rgba(34,211,238,0.3),0_0_22px_rgba(34,211,238,0.22)]"
+      ? "border-cyan-400/38 bg-[#050a0c] shadow-[inset_0_2px_8px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(34,211,238,0.07)] focus-within:border-cyan-300/80 focus-within:shadow-[inset_0_2px_8px_rgba(0,0,0,0.45),0_0_0_1px_rgba(34,211,238,0.3),0_0_22px_rgba(34,211,238,0.22)]"
       : tone === "fuchsia"
-        ? "border-fuchsia-400/40 shadow-[inset_0_1px_0_rgba(192,132,252,0.08)] focus-within:border-fuchsia-300/78 focus-within:shadow-[0_0_0_1px_rgba(192,132,252,0.28),0_0_22px_rgba(168,85,247,0.22)]"
-        : "border-[rgba(255,215,0,0.42)] shadow-[inset_0_1px_0_rgba(255,215,0,0.07)] focus-within:border-[rgba(255,230,120,0.78)] focus-within:shadow-[0_0_0_1px_rgba(255,215,0,0.25),0_0_24px_rgba(255,200,0,0.2)]";
+        ? "border-fuchsia-400/40 bg-[#0a060c] shadow-[inset_0_2px_8px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(192,132,252,0.08)] focus-within:border-fuchsia-300/78 focus-within:shadow-[inset_0_2px_8px_rgba(0,0,0,0.45),0_0_0_1px_rgba(192,132,252,0.28),0_0_22px_rgba(168,85,247,0.22)]"
+        : "border-[rgba(255,215,0,0.42)] bg-[#0a0906] shadow-[inset_0_2px_8px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(255,215,0,0.07)] focus-within:border-[rgba(255,230,120,0.78)] focus-within:shadow-[inset_0_2px_8px_rgba(0,0,0,0.45),0_0_0_1px_rgba(255,215,0,0.25),0_0_24px_rgba(255,200,0,0.2)]";
 
   const textTone =
     tone === "cyan" ? "text-cyan-50/95" : tone === "fuchsia" ? "text-fuchsia-50/95" : "text-[rgba(255,248,220,0.92)]";
@@ -409,7 +421,7 @@ export function DeckTimeField({
       </label>
       <div
         className={cn(
-          "mt-1.5 flex min-h-[2.65rem] w-full min-w-0 items-stretch overflow-visible rounded-lg border bg-black/45",
+          "mt-1.5 flex min-h-[44px] w-full min-w-0 items-stretch overflow-visible rounded-lg border",
           wrap
         )}
       >
@@ -418,8 +430,10 @@ export function DeckTimeField({
           disabled={disabled}
           onClick={() => !disabled && setOpen((o) => !o)}
           className={cn(
-            "grid w-11 shrink-0 place-items-center border-r border-white/10 bg-black/35",
-            disabled ? "cursor-not-allowed opacity-40" : "cursor-pointer hover:bg-white/5"
+            "grid min-h-[44px] min-w-[44px] shrink-0 place-items-center border-r border-white/12 bg-black/35",
+            disabled ? "cursor-not-allowed opacity-40" : "cursor-pointer hover:bg-white/8",
+            "focus-visible:z-[1] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-offset-0",
+            triggerRing
           )}
           aria-label="Open time picker"
         >
@@ -431,12 +445,14 @@ export function DeckTimeField({
           disabled={disabled}
           onClick={() => !disabled && setOpen((o) => !o)}
           className={cn(
-            "min-w-0 flex-1 px-3 py-2.5 text-left text-[14px] outline-none md:text-[15px]",
+            "min-h-[44px] min-w-0 flex-1 px-3 py-2.5 text-left text-[15px] font-medium leading-snug outline-none md:text-[15px]",
             textTone,
-            disabled ? "cursor-not-allowed opacity-40" : "cursor-pointer"
+            disabled ? "cursor-not-allowed opacity-40" : "cursor-pointer",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-offset-0",
+            triggerRing
           )}
         >
-          {value ? value : <span className="text-white/35">Select time…</span>}
+          {value ? value : <span className="text-white/38">Select time…</span>}
         </button>
       </div>
       {open && !disabled ? (
@@ -446,7 +462,7 @@ export function DeckTimeField({
             t.border
           )}
         >
-          <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-white/45">Hour & minute</div>
+          <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-neutral-400/90">Hour & minute</div>
           <div className="mt-2 flex gap-2">
             <select
               className="min-w-0 flex-1 rounded-lg border border-white/15 bg-black/55 px-2 py-2 text-[13px] text-white/90 outline-none"
@@ -526,7 +542,7 @@ export function DeckBrowseDateBar({
     <div
       ref={rootRef}
       className={cn(
-        "relative flex flex-col gap-2 rounded-xl border bg-black/40 px-3 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:px-4 sm:py-3.5",
+        "relative flex flex-col gap-2 rounded-xl border bg-black/48 px-3 py-3 shadow-[0_10px_36px_rgba(0,0,0,0.42),inset_0_1px_0_rgba(255,255,255,0.05)] sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:px-4 sm:py-3.5",
         t.border
       )}
     >
@@ -534,7 +550,7 @@ export function DeckBrowseDateBar({
         <div className="font-mono text-[10px] font-black uppercase tracking-[0.22em] text-[color:var(--gold)]/88">
           Browse by day
         </div>
-        <p className="mt-1 text-[11px] leading-snug text-white/55 sm:text-[12px]">
+        <p className="mt-1 text-[12px] font-normal leading-relaxed text-neutral-300/88 sm:text-[13px] sm:leading-snug">
           Pick any past or future date to filter missions, reminders, and notes that belong to that calendar day.
         </p>
       </div>
@@ -543,20 +559,20 @@ export function DeckBrowseDateBar({
           type="button"
           onClick={() => setOpen((o) => !o)}
           className={cn(
-            "inline-flex items-center gap-2 rounded-lg border border-white/15 bg-black/50 px-3 py-2 text-[12px] font-semibold text-white/90 hover:bg-black/65",
+            "inline-flex min-h-[44px] items-center gap-2 rounded-lg border border-white/18 bg-black/55 px-3.5 py-2 text-[13px] font-semibold text-neutral-100/95 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] hover:bg-black/68 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(250,204,21,0.45)] focus-visible:ring-offset-2 focus-visible:ring-offset-[#050505]",
             t.ring
           )}
           aria-expanded={open}
         >
-          <Calendar className={cn("h-4 w-4", t.icon)} aria-hidden />
+          <Calendar className={cn("h-4 w-4 shrink-0", t.icon)} aria-hidden />
           {label}
-          <ChevronDown className="h-4 w-4 opacity-60" aria-hidden />
+          <ChevronDown className="h-4 w-4 shrink-0 opacity-60" aria-hidden />
         </button>
         {browseDate ? (
           <button
             type="button"
             onClick={() => onBrowseDateChange(null)}
-            className="rounded-lg border border-white/12 px-3 py-2 text-[11px] font-bold uppercase tracking-[0.14em] text-white/60 hover:border-white/25 hover:text-white/85"
+            className="inline-flex min-h-[44px] items-center justify-center rounded-lg border border-white/16 bg-black/45 px-3.5 text-[11px] font-black uppercase tracking-[0.14em] text-neutral-200/90 hover:border-white/28 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(250,204,21,0.45)] focus-visible:ring-offset-2 focus-visible:ring-offset-[#050505]"
           >
             Show all
           </button>

@@ -24,22 +24,33 @@ function useNextProxy(): boolean {
   return v === "" || v === "proxy";
 }
 
+/**
+ * Django `APPEND_SLASH` expects `/api/.../resource/?q=` not `/api/.../resource?q=`.
+ * Normalizes only the path segment before `?` so query params are never corrupted.
+ */
+function normalizeDjangoApiPath(apiPath: string): string {
+  const raw = apiPath.startsWith("/") ? apiPath : `/${apiPath}`;
+  const qIdx = raw.indexOf("?");
+  const pathOnly = qIdx === -1 ? raw : raw.slice(0, qIdx);
+  const query = qIdx === -1 ? "" : raw.slice(qIdx + 1);
+  const withSlash = pathOnly.endsWith("/") ? pathOnly : `${pathOnly}/`;
+  return query ? `${withSlash}?${query}` : withSlash;
+}
+
 /** Build fetch URL for an API path like `/api/auth/login/`. */
 export function resolveClientApiUrl(apiPath: string): string {
   if (apiPath.startsWith("http://") || apiPath.startsWith("https://")) return apiPath;
+  const normalized = normalizeDjangoApiPath(apiPath);
   if (typeof window === "undefined") {
     const base = (process.env.NEXT_PUBLIC_API_BASE || "http://127.0.0.1:8000").replace(/\/$/, "");
-    const p = apiPath.startsWith("/") ? apiPath : `/${apiPath}`;
-    return `${base}${p}`;
+    return `${base}${normalized}`;
   }
   if (!useNextProxy()) {
     const base = (process.env.NEXT_PUBLIC_API_BASE || "").replace(/\/$/, "");
-    const p = apiPath.startsWith("/") ? apiPath : `/${apiPath}`;
-    return `${base}${p}`;
+    return `${base}${normalized}`;
   }
-  const withoutApi = apiPath.replace(/^\/api\//, "").replace(/^\//, "");
-  const tail = withoutApi.endsWith("/") ? withoutApi : `${withoutApi}/`;
-  return `/api/portal-proxy/${tail}`;
+  const withoutApi = normalized.replace(/^\/api\//, "");
+  return `/api/portal-proxy/${withoutApi}`;
 }
 
 /** Hint text for login / errors (human-readable). */

@@ -19,6 +19,92 @@
   --gold-neon-glow-strong: rgba(250, 204, 21, 0.65);
   --gold-neon-haze: rgba(250, 204, 21, 0.14);
   --hud-font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  /* Primary UI typeface (Thryon) — default for almost all text */
+  --font-heading: "Thryon", "Thyron", var(--hud-font);
+
+  /* Fluid layout + type (clamp) — use via var() or .fluid-* utilities */
+  --fluid-page-px: clamp(0.375rem, 1.65vw + 0.1rem, 1.25rem);
+  --fluid-page-pb: clamp(0.375rem, 1.1vw + 0.2rem, 0.9rem);
+  --fluid-nav-py: clamp(0.45rem, 1.15vw + 0.18rem, 1rem);
+  --fluid-nav-pl: clamp(0.2rem, 1vw + 0.06rem, 1.35rem);
+  --fluid-nav-pr: clamp(0.45rem, 1.25vw + 0.2rem, 1.35rem);
+  --fluid-nav-gap: clamp(0.35rem, 1.35vw + 0.12rem, 1.35rem);
+  --fluid-dock-gap: clamp(0.25rem, 0.95vw + 0.08rem, 0.55rem);
+  --fluid-main-grid-gap: clamp(0.35rem, 1.7vw + 0.08rem, 1.1rem);
+  --fluid-main-grid-pt: clamp(0.4rem, 1.25vw + 0.12rem, 0.9rem);
+  --fluid-sidebar-p: clamp(0.4rem, 1.15vw + 0.2rem, 0.95rem);
+  --fluid-section-p: clamp(0.65rem, 1.85vw + 0.28rem, 1.75rem);
+  --fluid-shell-p: clamp(0.65rem, 1.9vw + 0.3rem, 1.85rem);
+  --fluid-card-p: clamp(0.75rem, 1.5vw + 0.35rem, 1.35rem);
+  --fluid-card-p-shell: clamp(0.85rem, 2vw + 0.35rem, 2rem);
+  --fluid-deck-p: clamp(0.65rem, 1.75vw + 0.3rem, 2.35rem);
+  --fluid-deck-form-p: clamp(0.65rem, 1.2vw + 0.35rem, 1.25rem);
+  --fluid-hero-title: clamp(0.95rem, 2.4vw + 0.4rem, 2.15rem);
+  --fluid-ui-xs: clamp(0.55rem, 0.35vw + 0.42rem, 0.6875rem);
+  --fluid-ui-sm: clamp(0.65rem, 0.4vw + 0.5rem, 0.8125rem);
+  --fluid-ui-md: clamp(0.75rem, 0.5vw + 0.55rem, 0.95rem);
+  --fluid-logo-min-h: clamp(2.15rem, 4.8vw + 0.45rem, 4.35rem);
+  --fluid-profile-btn-h: clamp(2.15rem, 4.8vw + 0.45rem, 4.35rem);
+  --fluid-instructor-media-minh: clamp(15rem, 32vh + 2rem, 22.5rem);
+  --fluid-path-gap: clamp(0.4rem, 1.2vw + 0.2rem, 0.85rem);
+  --fluid-membership-gap: clamp(0.5rem, 1.5vw + 0.25rem, 1.25rem);
+}
+
+/* Compose fluid utilities (Tailwind-friendly) */
+.fluid-page-px {
+  padding-left: var(--fluid-page-px);
+  padding-right: var(--fluid-page-px);
+}
+.fluid-page-pb {
+  padding-bottom: var(--fluid-page-pb);
+}
+.fluid-nav-py {
+  padding-top: var(--fluid-nav-py);
+  padding-bottom: var(--fluid-nav-py);
+}
+.fluid-nav-pl {
+  padding-left: var(--fluid-nav-pl);
+}
+.fluid-nav-pr {
+  padding-right: var(--fluid-nav-pr);
+}
+.fluid-nav-gap {
+  gap: var(--fluid-nav-gap);
+}
+.fluid-dock-gap {
+  gap: var(--fluid-dock-gap);
+}
+.fluid-main-grid {
+  gap: var(--fluid-main-grid-gap);
+  padding-top: var(--fluid-main-grid-pt);
+}
+.fluid-sidebar-p {
+  padding: var(--fluid-sidebar-p);
+}
+.fluid-section-p {
+  padding: var(--fluid-section-p);
+}
+.fluid-shell-p {
+  padding: var(--fluid-shell-p);
+}
+.fluid-hero-title {
+  font-size: var(--fluid-hero-title);
+  line-height: 1.12;
+}
+.fluid-path-grid-gap {
+  gap: var(--fluid-path-gap);
+}
+.fluid-membership-gap {
+  gap: var(--fluid-membership-gap);
+}
+.fluid-text-ui-xs {
+  font-size: var(--fluid-ui-xs);
+}
+.fluid-text-ui-sm {
+  font-size: var(--fluid-ui-sm);
+}
+.fluid-text-ui-md {
+  font-size: var(--fluid-ui-md);
 }
 
 /* Put your font file in: public/assets/fonts/Thryon.otf */
@@ -53,17 +139,127 @@ body {
 }
 
 html {
-  font-size: 22px;
+  font-size: clamp(15px, 0.32rem + 1.05vw, 22px);
 }
 
 body {
-  font-family: "Thryon", "Thyron", var(--hud-font);
-  font-weight: 750;
+  font-family: var(--font-heading);
+  font-weight: 650;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-weight: 800;
+}
+
+button,
+input,
+textarea,
+select {
+  font-family: inherit;
+}
+
+/**
+ * Narrow / dense “small card” surfaces (low width × height): use readable sans.
+ * Thryon stays on the rest of the app via body. `.font-mono` / code stay monospace.
+ */
+.compact-card-ui {
+  font-family: var(--hud-font);
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+.compact-card-ui :where(h1, h2, h3, h4, h5, h6) {
+  font-family: var(--hud-font);
+}
+
+.compact-card-ui .font-mono,
+.compact-card-ui code,
+.compact-card-ui pre,
+.compact-card-ui kbd {
+  font-family: var(--font-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+/**
+ * Left rail nav: Thryon labels + fluid checkbox / icon / padding (clamp).
+ * Not `.compact-card-ui` — display font matches the rest of the shell.
+ */
+.sidebar-nav-dock {
+  --sidebar-nav-checkbox: clamp(14px, 0.32rem + 1.55vw, 22px);
+  --sidebar-nav-checkbox-inner: clamp(5px, 0.14rem + 0.75vw, 10px);
+  --sidebar-nav-icon-frame: clamp(22px, 1rem + 2vw, 30px);
+  --sidebar-nav-icon-svg: clamp(13px, 0.3rem + 1.35vw, 18px);
+  --sidebar-nav-item-gap: clamp(0.3rem, 0.7vw + 0.12rem, 0.75rem);
+  --sidebar-nav-item-px: clamp(0.3rem, 0.8vw + 0.1rem, 0.85rem);
+  --sidebar-nav-item-py: clamp(0.32rem, 0.7vw + 0.12rem, 0.55rem);
+  --sidebar-nav-list-gap: clamp(0.25rem, 0.55vw + 0.1rem, 0.45rem);
+  --sidebar-nav-section-p: clamp(0.38rem, 1.05vw + 0.15rem, 0.95rem);
+  --sidebar-nav-section-pb: clamp(0.85rem, 1.85vw + 0.35rem, 1.5rem);
+  --sidebar-nav-label-size: clamp(0.52rem, 0.22vw + 0.44rem, 0.875rem);
+  --sidebar-nav-label-tracking: clamp(0.05em, 0.12vw + 0.04em, 0.14em);
+  --sidebar-nav-accent-w: clamp(22px, 2.5vw + 8px, 42px);
+
+  padding: var(--sidebar-nav-section-p);
+  padding-bottom: var(--sidebar-nav-section-pb);
+  font-family: var(--font-heading);
+}
+
+.sidebar-nav-dock .sidebar-nav-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sidebar-nav-list-gap);
+}
+
+.sidebar-nav-dock .sidebar-nav-item {
+  gap: var(--sidebar-nav-item-gap);
+  padding: var(--sidebar-nav-item-py) var(--sidebar-nav-item-px);
+}
+
+.sidebar-nav-dock .sidebar-nav-label {
+  font-family: var(--font-heading);
+  font-size: var(--sidebar-nav-label-size);
+  letter-spacing: var(--sidebar-nav-label-tracking);
+  line-height: 1.2;
+}
+
+.sidebar-nav-dock .sidebar-nav-checkbox {
+  width: var(--sidebar-nav-checkbox);
+  height: var(--sidebar-nav-checkbox);
+  border-radius: clamp(4px, 0.45vw + 2px, 7px);
+}
+
+.sidebar-nav-dock .sidebar-nav-checkbox-dot {
+  width: var(--sidebar-nav-checkbox-inner);
+  height: var(--sidebar-nav-checkbox-inner);
+  border-radius: clamp(2px, 0.2vw + 1px, 4px);
+}
+
+.sidebar-nav-dock .sidebar-nav-checkbox-ring {
+  border-radius: inherit;
+}
+
+.sidebar-nav-dock .sidebar-nav-icon-frame {
+  width: var(--sidebar-nav-icon-frame);
+  height: var(--sidebar-nav-icon-frame);
+  border-radius: clamp(5px, 0.35vw + 4px, 9px);
+}
+
+.sidebar-nav-dock .sidebar-nav-icon-svg {
+  width: var(--sidebar-nav-icon-svg);
+  height: var(--sidebar-nav-icon-svg);
+}
+
+.sidebar-nav-dock .sidebar-nav-accent-line {
+  width: var(--sidebar-nav-accent-w);
 }
 
 /* Optional "focus mode" when sidebar is collapsed */
 .focus-mode {
-  font-size: 24px;
+  font-size: clamp(16px, 0.38rem + 1.1vw, 24px);
 }
 
 /* Fullscreen background video layer */
@@ -274,6 +470,80 @@ body {
 
 .premium-gold-border {
   border: 2px solid rgba(255, 215, 0, 0.5);
+}
+
+/* Opportunity path cards — sun wash + sweep (aligned with ledger gold deck vibe) */
+@keyframes sun-glow-breathe {
+  0%,
+  100% {
+    opacity: 0.42;
+  }
+  50% {
+    opacity: 0.95;
+  }
+}
+
+@keyframes sun-ray-sweep {
+  0% {
+    transform: translateX(-28%) translateY(-6%) rotate(-10deg);
+    opacity: 0.28;
+  }
+  50% {
+    transform: translateX(22%) translateY(4%) rotate(-8deg);
+    opacity: 0.62;
+  }
+  100% {
+    transform: translateX(-28%) translateY(-6%) rotate(-10deg);
+    opacity: 0.28;
+  }
+}
+
+.opportunity-card-sun {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse 135% 90% at 50% -20%,
+    rgba(255, 252, 235, 0.5),
+    rgba(255, 220, 120, 0.16) 36%,
+    transparent 58%
+  );
+  animation: sun-glow-breathe 5s ease-in-out infinite;
+  mix-blend-mode: screen;
+}
+
+.opportunity-card-sun-strong {
+  background: radial-gradient(
+    ellipse 140% 95% at 50% -22%,
+    rgba(255, 252, 240, 0.62),
+    rgba(255, 215, 90, 0.22) 34%,
+    transparent 58%
+  );
+  filter: saturate(1.12);
+}
+
+.opportunity-card-sun-ray {
+  pointer-events: none;
+  position: absolute;
+  inset: -45% -25%;
+  background: linear-gradient(
+    108deg,
+    transparent 0%,
+    rgba(255, 248, 220, 0.06) 40%,
+    rgba(255, 248, 220, 0.18) 50%,
+    rgba(255, 248, 220, 0.06) 60%,
+    transparent 100%
+  );
+  animation: sun-ray-sweep 9s ease-in-out infinite;
+  mix-blend-mode: screen;
+}
+
+.opportunity-card-ledger-glow {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  opacity: 0.9;
+  background: radial-gradient(780px 300px at 22% 0%, rgba(255, 215, 0, 0.22), rgba(0, 0, 0, 0) 58%);
 }
 
 .heading-glow {

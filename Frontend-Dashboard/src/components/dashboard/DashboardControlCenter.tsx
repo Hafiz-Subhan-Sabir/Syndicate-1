@@ -8,7 +8,6 @@ import { accentByKey, Card, cn, ProgressBar, themeAccent, type ThemeMode } from 
 import { PortalSessionControls } from "../auth/PortalSessionControls";
 import { GoalPathSystem } from "./path/GoalPathSystem";
 import { MissionCommandDeckCard } from "./MissionCommandDeckCard";
-import { ProgramPromoEmbed } from "../ProgramPromoEmbed";
 
 export type { ThemeMode };
 
@@ -309,11 +308,6 @@ function HeroStatusPanel({
         </div>
       </div>
 
-      <ProgramPromoEmbed
-        title="Continue program — dashboard briefing"
-        className="relative mx-auto mt-5 w-full"
-        maxWidthClass="max-w-4xl"
-      />
     </div>
   );
 }

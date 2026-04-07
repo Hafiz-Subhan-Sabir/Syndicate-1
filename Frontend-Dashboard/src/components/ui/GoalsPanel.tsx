@@ -81,7 +81,7 @@ function GoalsPanelOverlay({
           <button
             type="button"
             onClick={onClose}
-            className="grid h-9 w-9 shrink-0 place-items-center rounded-md border border-white/15 bg-black/40 text-white/80 transition hover:border-white/35 hover:text-white"
+            className="grid h-11 w-11 min-h-[44px] min-w-[44px] shrink-0 place-items-center rounded-lg border border-white/18 bg-black/45 text-neutral-200/95 transition hover:border-white/32 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(250,204,21,0.5)] focus-visible:ring-offset-2 focus-visible:ring-offset-[#060606]"
             aria-label="Close panel"
           >
             <X className="h-5 w-5" strokeWidth={2} />

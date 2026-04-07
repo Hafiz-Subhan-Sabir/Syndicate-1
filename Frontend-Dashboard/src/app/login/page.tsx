@@ -54,7 +54,7 @@ export default function LoginPage() {
         animate={{ opacity: 1, y: 0 }}
         className="w-full max-w-md rounded-lg border border-[rgba(255,215,0,0.35)] bg-[#0a0a0a]/95 p-8 shadow-[0_0_40px_rgba(255,215,0,0.12)]"
       >
-        <h1 className="font-mono text-lg font-black uppercase tracking-[0.2em] text-[color:var(--gold)]/95">
+        <h1 className="text-lg font-black uppercase tracking-[0.2em] text-[color:var(--gold)]/95">
           Syndicate access
         </h1>
         <p className="mt-2 text-[13px] text-white/55">
