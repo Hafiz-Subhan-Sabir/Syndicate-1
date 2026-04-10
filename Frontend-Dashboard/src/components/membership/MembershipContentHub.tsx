@@ -2,9 +2,11 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { portalFetch } from "@/lib/portal-api";
+import Link from "next/link";
+import { authRequired, fetchAuthenticatedPdfBlob, portalFetch } from "@/lib/portal-api";
 import { SearchBar } from "./SearchBar";
 import { ArticleCard, type ArticleDto } from "./ArticleCard";
+import { MembershipArticleReader, type ArticleReaderState } from "./MembershipArticleReader";
 import { VideoCard, type VideoDto } from "./VideoCard";
 
 type Tab = "articles" | "videos";
@@ -49,6 +51,19 @@ function cx(...parts: Array<string | false | null | undefined>) {
   return parts.filter(Boolean).join(" ");
 }
 
+function apiErrorMessage(status: number, data: unknown, fallback: string): string {
+  if (status === 401) {
+    return authRequired()
+      ? "Sign in to load member articles and videos (JWT required)."
+      : "Member content requires a signed-in session. Log in once so we can attach your access token.";
+  }
+  if (status === 404) {
+    return "API not found on this origin. Leave NEXT_PUBLIC_API_BASE empty to use the Next.js proxy to Django, or set it to your Django URL (e.g. http://127.0.0.1:8000).";
+  }
+  if (typeof data === "object" && data && "detail" in data) return String((data as { detail?: string }).detail);
+  return fallback;
+}
+
 export function MembershipContentHub() {
   const [tab, setTab] = useState<Tab>("articles");
   const [search, setSearch] = useState("");
@@ -67,8 +82,30 @@ export function MembershipContentHub() {
   const [error, setError] = useState<string | null>(null);
   const [searchHint, setSearchHint] = useState<string | null>(null);
   const [activeVideo, setActiveVideo] = useState<VideoDto | null>(null);
+  const [articleReader, setArticleReader] = useState<ArticleReaderState>(null);
 
   const embed = activeVideo ? embedUrlForVideo(activeVideo.video_url) : null;
+
+  const closeArticleReader = useCallback(() => {
+    setArticleReader((prev) => {
+      if (prev?.kind === "pdf") URL.revokeObjectURL(prev.blobUrl);
+      return null;
+    });
+  }, []);
+
+  const handleOpenArticlePdf = useCallback(async (article: ArticleDto) => {
+    const path = article.pdf_url?.trim();
+    if (!path) return;
+    const blob = await fetchAuthenticatedPdfBlob(path);
+    const blobUrl = URL.createObjectURL(blob);
+    setArticleReader({ kind: "pdf", title: article.title, blobUrl });
+  }, []);
+
+  const handleOpenArticleWeb = useCallback((article: ArticleDto) => {
+    const url = article.source_url?.trim();
+    if (!url) return;
+    setArticleReader({ kind: "web", title: article.title, url });
+  }, []);
 
   const loadTags = useCallback(async () => {
     const { ok, data } = await portalFetch<string[]>("/api/portal/membership/tags/");
@@ -82,11 +119,11 @@ export function MembershipContentHub() {
       if (debouncedSearch.trim()) params.set("q", debouncedSearch.trim());
       if (tagFilter) params.set("tag", tagFilter);
       params.set("sort", sort);
-      const { ok, data } = await portalFetch<Paginated<ArticleDto>>(
+      const { ok, data, status } = await portalFetch<Paginated<ArticleDto>>(
         `/api/portal/membership/articles/?${params.toString()}`
       );
       if (!ok) {
-        setError(typeof data === "object" && data && "detail" in data ? String((data as { detail?: string }).detail) : "Could not load articles.");
+        setError(apiErrorMessage(status, data, "Could not load articles."));
         setLoading(false);
         return;
       }
@@ -103,9 +140,9 @@ export function MembershipContentHub() {
   const loadVideos = useCallback(async (page: number, append: boolean) => {
     const params = new URLSearchParams();
     params.set("page", String(page));
-    const { ok, data } = await portalFetch<Paginated<VideoDto>>(`/api/portal/membership/videos/?${params.toString()}`);
+    const { ok, data, status } = await portalFetch<Paginated<VideoDto>>(`/api/portal/membership/videos/?${params.toString()}`);
     if (!ok) {
-      setError(typeof data === "object" && data && "detail" in data ? String((data as { detail?: string }).detail) : "Could not load videos.");
+      setError(apiErrorMessage(status, data, "Could not load videos."));
       setLoading(false);
       return;
     }
@@ -250,7 +287,17 @@ export function MembershipContentHub() {
           ) : null}
 
           {error ? (
-            <div className="rounded-xl border border-red-500/35 bg-red-950/25 p-4 text-[13px] text-red-200/90">{error}</div>
+            <div className="rounded-xl border border-red-500/35 bg-red-950/25 p-4 text-[13px] text-red-200/90">
+              <p>{error}</p>
+              {error.includes("Sign in") || error.includes("signed-in") ? (
+                <Link
+                  href="/login"
+                  className="mt-3 inline-flex rounded-lg border border-[rgba(250,204,21,0.45)] bg-black/40 px-4 py-2 text-[11px] font-black uppercase tracking-[0.18em] text-[color:var(--gold-neon)] transition hover:border-[rgba(250,204,21,0.65)]"
+                >
+                  Log in
+                </Link>
+              ) : null}
+            </div>
           ) : null}
 
           {loading && !articles.length ? (
@@ -267,7 +314,13 @@ export function MembershipContentHub() {
                 const featured = article.is_featured && i === 0;
                 return (
                   <div key={article.id} className={cx(featured && "md:col-span-2 xl:col-span-2")}>
-                    <ArticleCard article={article} featured={featured} index={i} />
+                    <ArticleCard
+                      article={article}
+                      featured={featured}
+                      index={i}
+                      onOpenPdf={handleOpenArticlePdf}
+                      onOpenWeb={handleOpenArticleWeb}
+                    />
                   </div>
                 );
               })}
@@ -289,7 +342,17 @@ export function MembershipContentHub() {
       ) : (
         <div className="space-y-[clamp(1rem,2.5vw+0.35rem,1.5rem)]">
           {error ? (
-            <div className="rounded-xl border border-red-500/35 bg-red-950/25 p-[var(--fluid-card-p)] text-[clamp(0.72rem,0.45vw+0.55rem,0.85rem)] text-red-200/90">{error}</div>
+            <div className="rounded-xl border border-red-500/35 bg-red-950/25 p-[var(--fluid-card-p)] text-[clamp(0.72rem,0.45vw+0.55rem,0.85rem)] text-red-200/90">
+              <p>{error}</p>
+              {error.includes("Sign in") || error.includes("signed-in") ? (
+                <Link
+                  href="/login"
+                  className="mt-3 inline-flex rounded-lg border border-[rgba(250,204,21,0.45)] bg-black/40 px-4 py-2 text-[11px] font-black uppercase tracking-[0.18em] text-[color:var(--gold-neon)] transition hover:border-[rgba(250,204,21,0.65)]"
+                >
+                  Log in
+                </Link>
+              ) : null}
+            </div>
           ) : null}
           {loading && !videos.length ? (
             <div className="py-[clamp(3rem,10vh,4.5rem)] text-center text-[clamp(0.72rem,0.45vw+0.55rem,0.85rem)] text-white/45">Loading videos…</div>
@@ -313,6 +376,8 @@ export function MembershipContentHub() {
           ) : null}
         </div>
       )}
+
+      <MembershipArticleReader state={articleReader} onClose={closeArticleReader} />
 
       <AnimatePresence>
         {activeVideo ? (

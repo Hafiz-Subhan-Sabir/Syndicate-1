@@ -8,12 +8,18 @@ class Article(models.Model):
     slug = models.SlugField(max_length=500, unique=True, db_index=True)
     description = models.TextField(blank=True)
     content = models.TextField(blank=True)
-    source_url = models.URLField(max_length=2048)
+    source_url = models.URLField(max_length=2048, blank=True)
     thumbnail = models.URLField(max_length=2048, blank=True)
     published_at = models.DateTimeField(default=timezone.now, db_index=True)
     tags = models.JSONField(default=list, blank=True)
     is_featured = models.BooleanField(default=False, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    pdf_file = models.FileField(
+        upload_to="membership/pdfs/",
+        blank=True,
+        null=True,
+        help_text="Optional stored PDF for members (search uses title/description/content; seed can append PDF text extract).",
+    )
 
     class Meta:
         ordering = ["-published_at", "-id"]

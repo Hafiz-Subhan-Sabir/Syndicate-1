@@ -20,6 +20,12 @@ const nextConfig = {
         {
           source: "/api/portal-proxy/:path*",
           destination: `${backendOrigin}/api/:path*`
+        },
+        {
+          // Backward-compatible fallback: if client accidentally hits /api/portal/* directly,
+          // still proxy to Django instead of returning Next.js 404.
+          source: "/api/portal/:path*",
+          destination: `${backendOrigin}/api/portal/:path*`
         }
       ]
     };

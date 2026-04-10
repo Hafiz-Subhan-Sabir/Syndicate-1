@@ -202,15 +202,17 @@ type DeckListItemProps = {
   footer?: ReactNode;
   dimmed?: boolean;
   tone?: DeckListItemTone;
+  className?: string;
 };
 
-export function DeckListItem({ title, subtitle, badge, footer, dimmed, tone = "gold" }: DeckListItemProps) {
+export function DeckListItem({ title, subtitle, badge, footer, dimmed, tone = "gold", className }: DeckListItemProps) {
   return (
     <div
       className={cn(
         "rounded-lg px-3 py-2.5 motion-reduce:transform-none md:px-3.5 md:py-3",
         ITEM_SURFACE[tone],
-        dimmed && "opacity-88 saturate-[0.94]"
+        dimmed && "opacity-88 saturate-[0.94]",
+        className
       )}
     >
       <div className="flex flex-wrap items-start justify-between gap-1">

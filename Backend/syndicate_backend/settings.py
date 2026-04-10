@@ -71,6 +71,16 @@ INSTALLED_APPS = [
 # If unset, search uses the database only (substring match on title/description/content).
 REDIS_URL = (os.environ.get("REDIS_URL") or "").strip()
 
+# Membership list/search/tags/videos: allow GET without JWT when True (local dev).
+# Default: same as DEBUG — anonymous reads work on runserver; set to false in .env to force login.
+_mpr = (os.environ.get("MEMBERSHIP_ALLOW_ANONYMOUS_READ") or "").strip().lower()
+if _mpr in ("0", "false", "no"):
+    MEMBERSHIP_ALLOW_ANONYMOUS_READ = False
+elif _mpr in ("1", "true", "yes"):
+    MEMBERSHIP_ALLOW_ANONYMOUS_READ = True
+else:
+    MEMBERSHIP_ALLOW_ANONYMOUS_READ = DEBUG
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -149,6 +159,9 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
 STATIC_URL = 'static/'
+
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field

@@ -189,13 +189,14 @@ select {
  * Not `.compact-card-ui` — display font matches the rest of the shell.
  */
 .sidebar-nav-dock {
-  --sidebar-nav-checkbox: clamp(14px, 0.32rem + 1.55vw, 22px);
-  --sidebar-nav-checkbox-inner: clamp(5px, 0.14rem + 0.75vw, 10px);
-  --sidebar-nav-icon-frame: clamp(22px, 1rem + 2vw, 30px);
-  --sidebar-nav-icon-svg: clamp(13px, 0.3rem + 1.35vw, 18px);
-  --sidebar-nav-item-gap: clamp(0.3rem, 0.7vw + 0.12rem, 0.75rem);
-  --sidebar-nav-item-px: clamp(0.3rem, 0.8vw + 0.1rem, 0.85rem);
-  --sidebar-nav-item-py: clamp(0.32rem, 0.7vw + 0.12rem, 0.55rem);
+  /* Slightly smaller checkbox + icon vs text so labels keep room (Thryon is wide) */
+  --sidebar-nav-checkbox: clamp(12px, 0.26rem + 1.2vw, 19px);
+  --sidebar-nav-checkbox-inner: clamp(4px, 0.11rem + 0.6vw, 9px);
+  --sidebar-nav-icon-frame: clamp(19px, 0.85rem + 1.45vw, 27px);
+  --sidebar-nav-icon-svg: clamp(11px, 0.26rem + 1.05vw, 17px);
+  --sidebar-nav-item-gap: clamp(0.22rem, 0.55vw + 0.1rem, 0.62rem);
+  --sidebar-nav-item-px: clamp(0.26rem, 0.68vw + 0.08rem, 0.78rem);
+  --sidebar-nav-item-py: clamp(0.3rem, 0.65vw + 0.1rem, 0.52rem);
   --sidebar-nav-list-gap: clamp(0.25rem, 0.55vw + 0.1rem, 0.45rem);
   --sidebar-nav-section-p: clamp(0.38rem, 1.05vw + 0.15rem, 0.95rem);
   --sidebar-nav-section-pb: clamp(0.85rem, 1.85vw + 0.35rem, 1.5rem);
@@ -203,9 +204,89 @@ select {
   --sidebar-nav-label-tracking: clamp(0.05em, 0.12vw + 0.04em, 0.14em);
   --sidebar-nav-accent-w: clamp(22px, 2.5vw + 8px, 42px);
 
+  container-type: inline-size;
+  container-name: syndicate-sidebar;
+  min-width: 0;
+
   padding: var(--sidebar-nav-section-p);
   padding-bottom: var(--sidebar-nav-section-pb);
   font-family: var(--font-heading);
+}
+
+/**
+ * Narrow–mid rail: squeeze chrome so label column wins horizontal space (cqi tracks sidebar width).
+ */
+@container syndicate-sidebar (max-width: 400px) {
+  .sidebar-nav-dock {
+    --sidebar-nav-checkbox: clamp(11px, 0.15rem + 2.6cqi, 17px);
+    --sidebar-nav-checkbox-inner: clamp(4px, 0.06rem + 1.2cqi, 7px);
+    --sidebar-nav-icon-frame: clamp(17px, 0.28rem + 4.2cqi, 24px);
+    --sidebar-nav-icon-svg: clamp(10px, 0.1rem + 2.5cqi, 14px);
+    --sidebar-nav-item-gap: clamp(0.18rem, 0.06rem + 0.95cqi, 0.48rem);
+    --sidebar-nav-item-px: clamp(0.2rem, 0.08rem + 1.05cqi, 0.55rem);
+    --sidebar-nav-item-py: clamp(0.26rem, 0.08rem + 0.95cqi, 0.48rem);
+  }
+}
+
+/**
+ * Mid-narrow rail: stop clip-path / overflow from cutting glyphs (e.g. ~300–340px laptop sidebar).
+ * Does not stack words — keeps standard single-line / soft wrap.
+ */
+@container syndicate-sidebar (max-width: 340px) {
+  .sidebar-nav-dock {
+    overflow-x: visible;
+    overflow-y: auto;
+  }
+
+  .sidebar-nav-dock .sidebar-nav-item.cut-frame-sm {
+    clip-path: none;
+    border-radius: clamp(5px, 0.4rem + 0.5cqi, 10px);
+    overflow: visible;
+  }
+
+  .sidebar-nav-dock.cut-frame {
+    clip-path: none;
+    border-radius: clamp(6px, 0.5rem + 0.6cqi, 14px);
+  }
+
+  .sidebar-nav-dock .sidebar-nav-label {
+    overflow-wrap: normal;
+    word-break: normal;
+  }
+}
+
+/**
+ * Very narrow rail (IDE preview / “showcase”): scale chrome with cqi + one word per line.
+ */
+@container syndicate-sidebar (max-width: 300px) {
+  .sidebar-nav-dock {
+    --sidebar-nav-checkbox: clamp(10px, 0.08rem + 2.8cqi, 16px);
+    --sidebar-nav-checkbox-inner: clamp(3px, 0.06rem + 1.35cqi, 7px);
+    --sidebar-nav-icon-frame: clamp(15px, 0.22rem + 4.2cqi, 22px);
+    --sidebar-nav-icon-svg: clamp(9px, 0.08rem + 2.4cqi, 13px);
+    --sidebar-nav-item-gap: clamp(0.16rem, 0.05rem + 0.85cqi, 0.42rem);
+    --sidebar-nav-item-px: clamp(0.18rem, 0.06rem + 0.95cqi, 0.5rem);
+    --sidebar-nav-item-py: clamp(0.24rem, 0.07rem + 0.9cqi, 0.45rem);
+    --sidebar-nav-label-size: clamp(0.28rem, 0.1rem + 3.4cqi, 0.68rem);
+    --sidebar-nav-label-tracking: clamp(0.03em, 0.05em + 0.2cqi, 0.1em);
+  }
+
+  .sidebar-nav-dock .sidebar-nav-item.cut-frame-sm {
+    align-items: flex-start;
+  }
+
+  .sidebar-nav-dock .sidebar-nav-label {
+    line-height: 1.15;
+  }
+
+  .sidebar-nav-dock .nav-label-text .nav-word-group {
+    display: block;
+    width: 100%;
+  }
+
+  .sidebar-nav-dock .nav-label-text .nav-label-space {
+    display: none;
+  }
 }
 
 .sidebar-nav-dock .sidebar-nav-list {
@@ -255,6 +336,238 @@ select {
 
 .sidebar-nav-dock .sidebar-nav-accent-line {
   width: var(--sidebar-nav-accent-w);
+}
+
+/* Ops deck: alarming bell on due toasts (navbar strip) */
+@keyframes deck-alarm-bell {
+  0%,
+  100% {
+    transform: rotate(-10deg) scale(1);
+    filter: blur(0);
+  }
+  20% {
+    transform: rotate(12deg) scale(1.12);
+    filter: blur(0.6px);
+  }
+  40% {
+    transform: rotate(-8deg) scale(1.04);
+    filter: blur(0);
+  }
+  60% {
+    transform: rotate(10deg) scale(1.1);
+    filter: blur(0.45px);
+  }
+  80% {
+    transform: rotate(-6deg) scale(1.02);
+    filter: blur(0);
+  }
+}
+
+.deck-alarm-bell {
+  display: inline-flex;
+  animation: deck-alarm-bell 0.42s ease-in-out infinite;
+  will-change: transform, filter;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .deck-alarm-bell {
+    animation: none;
+  }
+}
+
+/**
+ * Due reminder strip (navbar): fluid clamp() for type, gaps, padding, buttons — mobile → desktop.
+ */
+.deck-reminder-nav-strip {
+  box-sizing: border-box;
+  display: flex;
+  height: 100%;
+  max-height: var(--fluid-logo-min-h);
+  width: 100%;
+  min-width: 0;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: clamp(0.25rem, 0.9vw + 0.08rem, 0.6rem);
+  overflow: hidden;
+  border-radius: clamp(0.25rem, 0.55vw + 0.08rem, 0.375rem);
+  border: 1px solid rgba(220, 38, 38, 0.58);
+  background: rgba(10, 5, 5, 0.96);
+  padding-block: clamp(0.04rem, 0.35vw + 0.02rem, 0.12rem);
+  padding-inline: clamp(0.28rem, 1.05vw + 0.08rem, 0.65rem);
+  box-shadow:
+    0 0 0 1px rgba(250, 204, 21, 0.42),
+    inset 0 0 0 1px rgba(239, 68, 68, 0.35),
+    0 clamp(4px, 0.6vw + 3px, 10px) clamp(18px, 2.5vw + 14px, 36px) rgba(0, 0, 0, 0.55);
+}
+
+.deck-reminder-nav-strip .deck-reminder-left {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: clamp(0.2rem, 0.65vw + 0.06rem, 0.45rem);
+  overflow: hidden;
+}
+
+.deck-reminder-nav-strip .deck-reminder-bell {
+  font-size: clamp(0.9rem, 2vw + 0.32rem, 1.35rem);
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.deck-reminder-nav-strip .deck-reminder-copy {
+  min-width: 0;
+  flex: 1 1 min(0, 100%);
+  overflow: hidden;
+}
+
+.deck-reminder-nav-strip .deck-reminder-label {
+  font-size: clamp(0.4375rem, 0.5vw + 0.28rem, 0.5625rem);
+  font-weight: 900;
+  letter-spacing: clamp(0.1em, 0.15vw + 0.1em, 0.22em);
+  text-transform: uppercase;
+  color: rgba(252, 165, 165, 0.96);
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.deck-reminder-nav-strip .deck-reminder-title {
+  font-size: clamp(0.625rem, 1vw + 0.35rem, 0.8125rem);
+  font-weight: 600;
+  line-height: 1.2;
+  color: rgba(255, 255, 255, 0.96);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.deck-reminder-nav-strip .deck-reminder-when {
+  font-size: clamp(0.5rem, 0.6vw + 0.28rem, 0.625rem);
+  font-weight: 500;
+  line-height: 1.2;
+  color: rgba(209, 213, 219, 0.9);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.deck-reminder-nav-strip .deck-reminder-actions {
+  display: flex;
+  flex-shrink: 0;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: clamp(0.18rem, 0.7vw + 0.05rem, 0.45rem);
+}
+
+.deck-reminder-nav-strip .deck-reminder-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  height: clamp(1.45rem, 2.2vw + 0.88rem, 2.35rem);
+  min-width: clamp(1.4rem, 2vw + 0.75rem, 2.1rem);
+  padding-inline: clamp(0.28rem, 0.7vw + 0.1rem, 0.5rem);
+  border-radius: clamp(0.18rem, 0.35vw + 0.08rem, 0.3rem);
+  border-width: 1px;
+  border-style: solid;
+  font-size: clamp(0.5rem, 0.42vw + 0.4rem, 0.625rem);
+  font-weight: 900;
+  letter-spacing: clamp(0.05em, 0.08vw + 0.04em, 0.12em);
+  text-transform: uppercase;
+  transition:
+    border-color 0.2s ease,
+    background-color 0.2s ease;
+}
+
+.deck-reminder-nav-strip .deck-reminder-btn:focus-visible {
+  outline: 2px solid transparent;
+  box-shadow: 0 0 0 2px rgba(250, 204, 21, 0.45);
+}
+
+.deck-reminder-nav-strip .deck-reminder-btn--snooze {
+  border-color: rgba(220, 38, 38, 0.55);
+  background: rgba(69, 10, 10, 0.55);
+  color: rgba(254, 242, 242, 0.98);
+}
+
+.deck-reminder-nav-strip .deck-reminder-btn--snooze:hover {
+  border-color: rgba(248, 113, 113, 0.75);
+}
+
+.deck-reminder-nav-strip .deck-reminder-btn--ghost {
+  border-color: rgba(255, 255, 255, 0.22);
+  background: rgba(0, 0, 0, 0.5);
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.deck-reminder-nav-strip .deck-reminder-btn--ghost:hover {
+  border-color: rgba(255, 255, 255, 0.38);
+}
+
+.deck-reminder-nav-strip .deck-reminder-btn--done {
+  border-color: rgba(163, 163, 163, 0.45);
+  background: rgba(0, 0, 0, 0.5);
+  color: rgba(245, 245, 245, 0.98);
+}
+
+.deck-reminder-nav-strip .deck-reminder-btn--done:hover {
+  border-color: rgba(212, 212, 212, 0.6);
+}
+
+.deck-reminder-nav-strip .deck-reminder-viewonly {
+  font-size: clamp(0.45rem, 0.5vw + 0.28rem, 0.5625rem);
+  color: rgba(254, 202, 202, 0.78);
+  max-width: min(8rem, 42vw);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/**
+ * Due alerts: react-hot-toast lives in the navbar center (between logo and search).
+ * Override fixed/absolute defaults so the strip uses the middle column and matches logo height.
+ */
+.premium-navbar #_rht_toaster {
+  position: relative !important;
+  inset: auto !important;
+  top: auto !important;
+  left: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  justify-content: center !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  height: var(--fluid-logo-min-h) !important;
+  min-height: var(--fluid-logo-min-h) !important;
+  max-height: var(--fluid-logo-min-h) !important;
+  overflow: hidden !important;
+  pointer-events: none !important;
+}
+
+.premium-navbar #_rht_toaster > div {
+  position: relative !important;
+  top: auto !important;
+  left: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  transform: none !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  height: 100% !important;
+  max-height: var(--fluid-logo-min-h) !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: stretch !important;
+  flex-shrink: 0 !important;
 }
 
 /* Optional "focus mode" when sidebar is collapsed */

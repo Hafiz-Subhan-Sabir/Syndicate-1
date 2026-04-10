@@ -12,6 +12,7 @@ import { useGoalsPanel } from "@/contexts/GoalsPanelContext";
 import { GoalsPanel } from "@/components/ui/GoalsPanel";
 import { SyndicateAiChallengePanel } from "../components/SyndicateAiChallengePanel";
 import { MembershipContentHub } from "../components/membership/MembershipContentHub";
+import { Toaster } from "react-hot-toast";
 
 type NavItem = { label: string; key: string; active?: boolean };
 type Course = {
@@ -36,25 +37,28 @@ type MonkChallenge = {
 };
 type ThemeMode = "default" | "danger" | "cyberpunk";
 
-type FeatureMenuEntry =
-  | { type: "nav"; section: string; label: string; navKey: string }
-  | { type: "theme"; section: string; label: string; mode: ThemeMode };
+type FeatureMenuEntry = { section: string; label: string; navKey: string };
 
 const FEATURE_MENU_ENTRIES: FeatureMenuEntry[] = [
-  { type: "nav", section: "Website features", label: "Dashboard overview", navKey: "dashboard" },
-  { type: "nav", section: "Website features", label: "Programs & courses", navKey: "programs" },
-  { type: "nav", section: "Website features", label: "Syndicate Mode", navKey: "monk" },
-  { type: "nav", section: "Website features", label: "Membership section", navKey: "resources" },
-  { type: "nav", section: "Website features", label: "Affiliate portal", navKey: "affiliate" },
-  { type: "nav", section: "More options", label: "Support", navKey: "support" },
-  { type: "nav", section: "More options", label: "Settings", navKey: "settings" },
-  { type: "theme", section: "Appearance", label: "Default theme", mode: "default" },
-  { type: "theme", section: "Appearance", label: "Danger theme", mode: "danger" },
-  { type: "theme", section: "Appearance", label: "Cyberpunk theme", mode: "cyberpunk" }
+  { section: "Website features", label: "Dashboard overview", navKey: "dashboard" },
+  { section: "Website features", label: "Programs & courses", navKey: "programs" },
+  { section: "Website features", label: "Syndicate Mode", navKey: "monk" },
+  { section: "Website features", label: "Membership section", navKey: "resources" },
+  { section: "Website features", label: "Affiliate portal", navKey: "affiliate" },
+  { section: "More options", label: "Support", navKey: "support" },
+  { section: "More options", label: "Settings", navKey: "settings" }
 ];
 
 const PROFILE_AVATAR_STORAGE_KEY = "dashboarded:profileAvatar";
+const PROFILE_NAME_STORAGE_KEY = "dashboarded:profileDisplayName";
 const PROFILE_AVATAR_MAX_BYTES = Math.floor(1.5 * 1024 * 1024);
+
+const menuMotion = {
+  initial: { opacity: 0, y: -10, scale: 0.98 },
+  animate: { opacity: 1, y: 0, scale: 1 },
+  exit: { opacity: 0, y: -8, scale: 0.98 },
+  transition: { duration: 0.22, ease: [0.22, 1, 0.36, 1] as const }
+};
 
 function cn(...parts: Array<string | false | null | undefined>) {
   return parts.filter(Boolean).join(" ");
@@ -101,6 +105,21 @@ function GoldButton({
       {icon ? <span className="grid h-4 w-4 place-items-center text-[color:var(--gold)]">{icon}</span> : null}
       <span>{children}</span>
     </button>
+  );
+}
+
+/** Word-level lines for nav (narrow sidebar stacks via @container; no mid-word breaks). */
+function SidebarNavLabel({ text }: { text: string }) {
+  const words = text.trim().split(/\s+/);
+  return (
+    <span className="nav-label-text break-normal [overflow-wrap:normal] [word-break:normal]">
+      {words.map((word, i) => (
+        <span key={`${word}-${i}`} className="nav-word-group">
+          {i > 0 ? <span className="nav-label-space"> </span> : null}
+          <span className="nav-word">{word}</span>
+        </span>
+      ))}
+    </span>
   );
 }
 
@@ -1396,7 +1415,17 @@ export default function Page() {
   const [themeMode, setThemeMode] = useState<ThemeMode>("default");
   const [profileOpen, setProfileOpen] = useState(false);
   const [profileAvatar, setProfileAvatar] = useState<string>("/assets/a.webp");
-  const profileName = "Subhan";
+  const [profileName, setProfileName] = useState("Subhan");
+
+  const persistProfileName = useCallback((name: string) => {
+    const trimmed = name.trim() || "Member";
+    setProfileName(trimmed);
+    try {
+      window.localStorage.setItem(PROFILE_NAME_STORAGE_KEY, trimmed);
+    } catch {
+      /* ignore */
+    }
+  }, []);
 
   const persistProfileAvatar = useCallback((src: string) => {
     setProfileAvatar(src);
@@ -1434,6 +1463,8 @@ export default function Page() {
     try {
       const saved = window.localStorage.getItem(PROFILE_AVATAR_STORAGE_KEY);
       if (saved) setProfileAvatar(saved);
+      const savedName = window.localStorage.getItem(PROFILE_NAME_STORAGE_KEY);
+      if (savedName) setProfileName(savedName);
     } catch {
       /* ignore */
     }
@@ -1457,15 +1488,20 @@ export default function Page() {
         const w = Math.min(window.innerWidth * 0.92, 320);
         let left = r.right - w;
         left = Math.max(pad, Math.min(left, window.innerWidth - w - pad));
+        const top = r.bottom + GAP;
+        const maxH = Math.max(120, window.innerHeight - top - pad);
         setFeaturesMenuFixedStyle({
           position: "fixed",
-          top: r.bottom + GAP,
+          top,
           left,
           width: w,
-          zIndex: z
+          zIndex: z,
+          maxHeight: Math.min(maxH, Math.floor(window.innerHeight * 0.72)),
+          display: "flex",
+          flexDirection: "column",
+          overflow: "hidden",
+          transformOrigin: "top right"
         });
-      } else {
-        setFeaturesMenuFixedStyle(null);
       }
 
       if (profileOpen && profileBtnRef.current) {
@@ -1478,15 +1514,20 @@ export default function Page() {
           left = r.right - w;
         }
         left = Math.max(pad, Math.min(left, window.innerWidth - w - pad));
+        const top = r.bottom + GAP;
+        const maxH = Math.max(120, window.innerHeight - top - pad);
         setProfileMenuFixedStyle({
           position: "fixed",
-          top: r.bottom + GAP,
+          top,
           left,
           width: w,
-          zIndex: z
+          zIndex: z,
+          maxHeight: Math.min(maxH, Math.floor(window.innerHeight * 0.78)),
+          display: "flex",
+          flexDirection: "column",
+          overflow: "hidden",
+          transformOrigin: window.innerWidth < 640 ? "top center" : "top right"
         });
-      } else {
-        setProfileMenuFixedStyle(null);
       }
     };
 
@@ -1990,22 +2031,6 @@ export default function Page() {
 
   useLayoutEffect(() => {
     if (!rootRef.current) return;
-    const btn = profileBtnRef.current;
-    const panel = profilePanelRef.current;
-    if (!btn) return;
-
-    if (profileOpen) {
-      gsap.to(btn, { scale: 1.035, duration: 0.18, ease: "power2.out", transformOrigin: "100% 0%" });
-      if (panel) {
-        gsap.fromTo(panel, { opacity: 0, y: -8 }, { opacity: 1, y: 0, duration: 0.22, ease: "power2.out" });
-      }
-    } else {
-      gsap.to(btn, { scale: 1, duration: 0.18, ease: "power2.out", transformOrigin: "100% 0%" });
-    }
-  }, [profileOpen, profileMenuFixedStyle]);
-
-  useLayoutEffect(() => {
-    if (!rootRef.current) return;
     if (glitchTimerRef.current) window.clearTimeout(glitchTimerRef.current);
 
     // After 1s, do the "beep" glitch visual on the selected card title + line.
@@ -2065,7 +2090,7 @@ export default function Page() {
             data-anim="in"
             className={cn(
               "shell-neon-yellow cut-frame cyber-frame gold-stroke-strong premium-navbar overflow-visible border bg-[#070707]/80 fluid-nav-py fluid-nav-pl fluid-nav-pr",
-              "flex items-center justify-between fluid-nav-gap lg:overflow-visible"
+              "flex items-center fluid-nav-gap lg:overflow-visible"
             )}
           >
           <div className="absolute inset-0 opacity-80 [background:radial-gradient(900px_280px_at_30%_0%,rgba(250,204,21,0.14),rgba(0,0,0,0)_55%)]" />
@@ -2077,7 +2102,7 @@ export default function Page() {
             onMouseLeave={() => {
               topMouseX.current = Infinity;
             }}
-            className="relative flex min-w-0 flex-1 items-center fluid-dock-gap"
+            className="relative flex min-w-0 shrink-0 items-center fluid-dock-gap"
           >
             <button
               type="button"
@@ -2088,7 +2113,7 @@ export default function Page() {
               <IconToggle open={sidebarOpen} />
             </button>
             {/* Logo: glow on hover/press only — excluded from top dock scale */}
-            <div className="relative min-w-0 flex-1 sm:flex-initial sm:max-w-[min(100%,200px)] md:max-w-[220px]">
+            <div className="relative min-w-0 max-w-[min(100%,200px)] md:max-w-[220px]">
               <button
                 ref={logoWrapRef}
                 type="button"
@@ -2111,7 +2136,37 @@ export default function Page() {
               </button>
             </div>
           </div>
-          <div className="relative flex shrink-0 items-center fluid-nav-gap">
+
+          {/* Due alerts (react-hot-toast): centered between logo and search — matches logo row height */}
+          <div className="relative z-[2] flex h-[var(--fluid-logo-min-h)] min-h-0 min-w-0 max-h-[var(--fluid-logo-min-h)] flex-1 items-stretch justify-center overflow-hidden px-[clamp(0.2rem,1.1vw+0.1rem,0.75rem)]">
+            <Toaster
+              position="top-center"
+              containerStyle={{
+                position: "relative",
+                top: "auto",
+                left: "auto",
+                right: "auto",
+                bottom: "auto",
+                width: "100%",
+                maxWidth: "100%",
+                height: "var(--fluid-logo-min-h)",
+                minHeight: "var(--fluid-logo-min-h)",
+                maxHeight: "var(--fluid-logo-min-h)",
+                alignSelf: "stretch",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                pointerEvents: "none",
+                overflow: "hidden"
+              }}
+              toastOptions={{
+                duration: 8000,
+                className: "!bg-transparent !p-0 !shadow-none !m-0 !w-full !max-w-full"
+              }}
+            />
+          </div>
+
+          <div className="relative z-[2] flex shrink-0 items-center fluid-nav-gap">
             <div className="relative flex items-center justify-end fluid-nav-gap">
               <div className="relative">
                 <button
@@ -2126,7 +2181,8 @@ export default function Page() {
                   }}
                   className={cn(
                     "navbar-chrome-btn cut-frame-sm cyber-frame gold-stroke grid h-8 w-8 place-items-center border bg-black/70 text-[color:var(--gold-neon)]/95 sm:h-9 sm:w-9 md:h-10 md:w-10",
-                    featuresMenuOpen && "hud-selected-glow border-[color:var(--gold-neon-border)]"
+                    "origin-center transition-[transform,box-shadow,border-color] duration-200 ease-out motion-reduce:transition-none",
+                    featuresMenuOpen && "hud-selected-glow border-[color:var(--gold-neon-border)] scale-[1.04]"
                   )}
                   aria-label="Search and site menu"
                   aria-expanded={featuresMenuOpen}
@@ -2160,8 +2216,8 @@ export default function Page() {
                   className={cn(
                     "navbar-chrome-panel cut-frame-sm cyber-frame gold-stroke glass-dark premium-button inline-flex w-full max-w-[min(100%,188px)] items-center gap-[clamp(0.35rem,1vw+0.1rem,0.55rem)] rounded-md border px-[clamp(0.35rem,1vw+0.1rem,0.65rem)] py-[clamp(0.15rem,0.45vw+0.08rem,0.45rem)] sm:mx-0 sm:max-w-[200px] md:max-w-[218px]",
                     "min-h-[var(--fluid-profile-btn-h)] h-[var(--fluid-profile-btn-h)]",
-                    "will-change-transform",
-                    profileOpen && "hud-selected-glow"
+                    "origin-right transition-[transform,box-shadow,border-color] duration-200 ease-out motion-reduce:transition-none",
+                    profileOpen && "hud-selected-glow scale-[1.02]"
                   )}
                   aria-haspopup="menu"
                   aria-expanded={profileOpen}
@@ -2193,76 +2249,104 @@ export default function Page() {
           </div>
         </div>
 
-        {overlayMount && featuresMenuOpen && featuresMenuFixedStyle
+        {overlayMount
           ? createPortal(
-              <div
-                ref={featuresMenuPanelRef}
-                style={featuresMenuFixedStyle}
-                className="compact-card-ui cut-frame cyber-frame gold-stroke glass-dark pointer-events-auto overflow-hidden border border-[color:var(--gold-neon-border-mid)] p-3 shadow-[0_0_24px_rgba(250,204,21,0.12)] sm:p-4"
-                role="menu"
-              >
-                <div className="absolute inset-0 opacity-70 [background:radial-gradient(520px_220px_at_20%_0%,rgba(250,204,21,0.1),rgba(0,0,0,0)_62%)]" />
-                <div className="relative">
-                  <div className="text-[10px] font-extrabold uppercase tracking-[0.22em] text-white/50">Find & navigate</div>
-                  <input
-                    type="search"
-                    value={featureSearchQuery}
-                    onChange={(e) => setFeatureSearchQuery(e.target.value)}
-                    placeholder="Filter features…"
-                    className="mt-2 w-full rounded-md border border-white/12 bg-black/40 px-3 py-2 text-[12px] text-white/85 placeholder:text-white/35 outline-none focus:border-[rgba(255,215,0,0.45)]"
-                    autoFocus
-                  />
-                  <div className="mt-3 max-h-[min(52vh,360px)] space-y-4 overflow-y-auto pr-1 no-scrollbar">
-                    {featureMenuGrouped.length === 0 ? (
-                      <div className="text-[12px] text-white/50">No matches.</div>
-                    ) : (
-                      featureMenuGrouped.map(([section, entries]) => (
-                        <div key={section}>
-                          <div className="text-[9px] font-black uppercase tracking-[0.2em] text-white/40">{section}</div>
-                          <div className="mt-1.5 space-y-1">
-                            {entries.map((entry, i) => (
-                              <button
-                                key={`${section}-${entry.type}-${i}`}
-                                type="button"
-                                role="menuitem"
-                                onClick={() => {
-                                  if (entry.type === "nav") {
-                                    setSelectedNavKey(entry.navKey);
-                                  } else {
-                                    setThemeMode(entry.mode);
-                                  }
-                                  setFeaturesMenuOpen(false);
-                                }}
-                                className={cn(
-                                  "flex w-full rounded-md border border-white/10 bg-black/30 px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-[0.1em] text-white/75 transition hover:border-[rgba(255,215,0,0.35)] hover:bg-black/50 hover:text-white/90",
-                                  entry.type === "theme" && themeMode === entry.mode && "border-[rgba(255,215,0,0.45)] text-[color:var(--gold)]/95"
-                                )}
-                              >
-                                {entry.label}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
-              </div>,
+              <AnimatePresence onExitComplete={() => setFeaturesMenuFixedStyle(null)}>
+                {featuresMenuOpen && featuresMenuFixedStyle ? (
+                  <motion.div
+                    key="features-menu"
+                    ref={featuresMenuPanelRef}
+                    style={featuresMenuFixedStyle}
+                    initial={menuMotion.initial}
+                    animate={menuMotion.animate}
+                    exit={menuMotion.exit}
+                    transition={menuMotion.transition}
+                    className="compact-card-ui cut-frame cyber-frame gold-stroke glass-dark pointer-events-auto overflow-hidden border border-[color:var(--gold-neon-border-mid)] p-3 shadow-[0_0_24px_rgba(250,204,21,0.12)] sm:p-4"
+                    role="menu"
+                  >
+                    <div className="pointer-events-none absolute inset-0 opacity-70 [background:radial-gradient(520px_220px_at_20%_0%,rgba(250,204,21,0.1),rgba(0,0,0,0)_62%)]" />
+                    <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
+                      <div className="text-[10px] font-extrabold uppercase tracking-[0.22em] text-white/50">Find & navigate</div>
+                      <input
+                        type="search"
+                        value={featureSearchQuery}
+                        onChange={(e) => setFeatureSearchQuery(e.target.value)}
+                        placeholder="Filter features…"
+                        className="mt-2 w-full rounded-md border border-white/12 bg-black/40 px-3 py-2 text-[12px] text-white/85 placeholder:text-white/35 outline-none focus:border-[rgba(255,215,0,0.45)]"
+                        autoFocus
+                      />
+                      <div className="mt-3 min-h-0 flex-1 space-y-4 overflow-y-auto pr-1 no-scrollbar">
+                        {featureMenuGrouped.length === 0 ? (
+                          <div className="text-[12px] text-white/50">No matches.</div>
+                        ) : (
+                          featureMenuGrouped.map(([section, entries]) => (
+                            <div key={section}>
+                              <div className="text-[9px] font-black uppercase tracking-[0.2em] text-white/40">{section}</div>
+                              <div className="mt-1.5 space-y-1">
+                                {entries.map((entry, i) => (
+                                  <button
+                                    key={`${section}-${entry.navKey}-${i}`}
+                                    type="button"
+                                    role="menuitem"
+                                    onClick={() => {
+                                      setSelectedNavKey(entry.navKey);
+                                      setFeaturesMenuOpen(false);
+                                    }}
+                                    className="flex w-full rounded-md border border-white/10 bg-black/30 px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-[0.1em] text-white/75 transition hover:border-[rgba(255,215,0,0.35)] hover:bg-black/50 hover:text-white/90"
+                                  >
+                                    {entry.label}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  </motion.div>
+                ) : null}
+              </AnimatePresence>,
               document.body
             )
           : null}
 
-        {overlayMount && profileOpen && profileMenuFixedStyle
+        {overlayMount
           ? createPortal(
-              <div
-                ref={profilePanelRef}
-                style={profileMenuFixedStyle}
-                className="compact-card-ui cut-frame cyber-frame gold-stroke glass-dark premium-gold-border pointer-events-auto overflow-hidden p-3 sm:p-4"
-                role="menu"
-              >
-                <div className="absolute inset-0 opacity-70 [background:radial-gradient(620px_260px_at_20%_0%,rgba(0,255,255,0.10),rgba(0,0,0,0)_62%)]" />
-                <div className="relative">
-                  <div className="flex items-center justify-between gap-3">
+              <AnimatePresence onExitComplete={() => setProfileMenuFixedStyle(null)}>
+                {profileOpen && profileMenuFixedStyle ? (
+                  <motion.div
+                    key="profile-menu"
+                    ref={profilePanelRef}
+                    style={profileMenuFixedStyle}
+                    initial={menuMotion.initial}
+                    animate={menuMotion.animate}
+                    exit={menuMotion.exit}
+                    transition={menuMotion.transition}
+                    className="compact-card-ui cut-frame cyber-frame gold-stroke glass-dark premium-gold-border pointer-events-auto overflow-hidden p-3 sm:p-4"
+                    role="menu"
+                  >
+                    <div className="pointer-events-none absolute inset-0 opacity-70 [background:radial-gradient(620px_260px_at_20%_0%,rgba(0,255,255,0.10),rgba(0,0,0,0)_62%)]" />
+                    <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
+                  <div className="shrink-0 border-b border-white/10 pb-3">
+                    <label htmlFor="profile-display-name" className="text-[10px] font-extrabold uppercase tracking-[0.22em] text-white/50">
+                      Display name
+                    </label>
+                    <input
+                      id="profile-display-name"
+                      type="text"
+                      value={profileName}
+                      onChange={(e) => setProfileName(e.target.value)}
+                      onBlur={() => persistProfileName(profileName)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+                      }}
+                      maxLength={48}
+                      autoComplete="name"
+                      className="mt-2 w-full rounded-md border border-white/12 bg-black/45 px-3 py-2 text-[13px] font-semibold text-white/92 outline-none placeholder:text-white/35 focus:border-[rgba(255,215,0,0.45)]"
+                      placeholder="Your name"
+                    />
+                  </div>
+                  <div className="mt-3 flex flex-shrink-0 items-center justify-between gap-3">
                     <div className="text-[11px] font-extrabold uppercase tracking-[0.22em] text-white/55">Choose Avatar</div>
                     <div className="text-[10px] font-extrabold uppercase tracking-[0.22em] text-white/40">Presets · upload</div>
                   </div>
@@ -2333,8 +2417,10 @@ export default function Page() {
                       Logout
                     </button>
                   </div>
-                </div>
-              </div>,
+                    </div>
+                  </motion.div>
+                ) : null}
+              </AnimatePresence>,
               document.body
             )
           : null}
@@ -2353,7 +2439,7 @@ export default function Page() {
                 dockMouseY.current = Infinity;
               }}
               className={cn(
-                "sidebar-nav-dock shell-neon-yellow cut-frame cyber-frame gold-stroke relative col-span-5 overflow-hidden border bg-[#060606]/70 md:col-span-2 lg:col-span-2",
+                "sidebar-nav-dock shell-neon-yellow cut-frame cyber-frame gold-stroke relative col-span-5 overflow-x-visible overflow-y-auto border bg-[#060606]/70 md:col-span-2 lg:col-span-2",
                 "max-md:max-h-[min(calc(100dvh-4.5rem),92vh)] max-md:self-start max-md:overflow-y-auto max-md:overflow-x-hidden",
                 "h-auto max-h-none md:overflow-visible lg:sticky lg:top-0 lg:h-full lg:max-h-none lg:overflow-auto no-scrollbar"
               )}
@@ -2380,7 +2466,7 @@ export default function Page() {
                       <NavIcon k={item.key} />
                     </span>
                     <span className="sidebar-nav-label nav-label min-w-0 flex-1 font-extrabold uppercase text-[color:var(--gold-neon)]/92 group-hover:text-[color:var(--gold-neon)]">
-                      <span className="nav-label-text line-clamp-2 break-words">{item.label}</span>
+                      <SidebarNavLabel text={item.label} />
                       <span className="nav-glitch max-md:hidden" aria-hidden="true" />
                     </span>
                     <span className="sidebar-nav-accent-line ml-auto hidden h-px shrink-0 bg-[linear-gradient(90deg,rgba(250,204,21,0),rgba(250,204,21,0.45))] opacity-0 transition group-hover:opacity-100 md:block" />
@@ -2412,6 +2498,9 @@ export default function Page() {
                 <div className="heading-glow fluid-hero-title font-black italic tracking-[0.02em] text-[color:var(--gold-neon)] drop-shadow-[0_0_28px_rgba(250,204,21,0.35)]">
                   THE SYNDICATE
                 </div>
+                <p className="mt-[clamp(0.35rem,0.9vw+0.12rem,0.55rem)] max-w-[min(100%,52rem)] text-[clamp(0.5rem,1.05vw+0.22rem,0.72rem)] font-black italic uppercase leading-snug tracking-[0.14em] text-[color:var(--gold-neon)]/88 drop-shadow-[0_0_14px_rgba(250,204,21,0.22)] sm:tracking-[0.18em]">
+                  MONEY, POWER, FREEDOM, HONOUR
+                </p>
               </header>
               {selectedNavKey === "monk" ? (
                 <SyndicateModeSection />

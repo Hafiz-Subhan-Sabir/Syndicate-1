@@ -46,7 +46,19 @@ export function resolveClientApiUrl(apiPath: string): string {
     return `${base}${normalized}`;
   }
   if (!useNextProxy()) {
-    const base = (process.env.NEXT_PUBLIC_API_BASE || "").replace(/\/$/, "");
+    let base = (process.env.NEXT_PUBLIC_API_BASE || "").replace(/\/$/, "");
+    // Misconfiguration: pointing at the Next dev server causes /api/portal/... 404s (no Django there).
+    if (
+      base &&
+      typeof window !== "undefined" &&
+      (base.includes(":3000") || base === window.location.origin)
+    ) {
+      base = "";
+    }
+    if (!base) {
+      const withoutApi = normalized.replace(/^\/api\//, "");
+      return `/api/portal-proxy/${withoutApi}`;
+    }
     return `${base}${normalized}`;
   }
   const withoutApi = normalized.replace(/^\/api\//, "");
@@ -204,6 +216,22 @@ export async function logoutRequest(accessToken: string): Promise<void> {
     method: "POST",
     headers: { Authorization: `Bearer ${accessToken}` }
   });
+}
+
+/**
+ * Fetch a binary PDF (membership article) with JWT. Use blob URLs for inline viewing.
+ */
+export async function fetchAuthenticatedPdfBlob(apiPath: string): Promise<Blob> {
+  const url = resolveClientApiUrl(apiPath.startsWith("/") ? apiPath : `/${apiPath}`);
+  const headers = new Headers();
+  const at = readStoredAccess();
+  if (at) headers.set("Authorization", `Bearer ${at}`);
+  const res = await fetch(url, { headers, credentials: "omit" });
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(text.slice(0, 240) || `PDF request failed (${res.status})`);
+  }
+  return res.blob();
 }
 
 export async function portalFetch<T>(

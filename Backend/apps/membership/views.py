@@ -1,9 +1,13 @@
 from django.db.models import Q
+from django.http import FileResponse, Http404
+from django.shortcuts import get_object_or_404
 from rest_framework import generics, views
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from apps.membership.models import Article, Video
+from apps.membership.permissions import MembershipPublicReadOrAuthenticated
 from apps.portal.permissions import IsAuthenticatedStrict
 from apps.membership.redis_index import cache_get_merged_ids, cache_set_merged_ids, search_article_ids, tokenize
 from apps.membership.serializers import ArticleSerializer, VideoSerializer
@@ -102,7 +106,7 @@ class ArticleListView(generics.ListAPIView):
 
 class VideoListView(generics.ListAPIView):
     serializer_class = VideoSerializer
-    permission_classes = [IsAuthenticatedStrict]
+    permission_classes = [MembershipPublicReadOrAuthenticated]
     pagination_class = MembershipPagination
 
     def get_queryset(self):
@@ -113,7 +117,7 @@ class MembershipSearchView(generics.ListAPIView):
     """Same filtering as /articles/; response always includes search meta when q is set."""
 
     serializer_class = ArticleSerializer
-    permission_classes = [IsAuthenticatedStrict]
+    permission_classes = [MembershipPublicReadOrAuthenticated]
     pagination_class = MembershipPagination
 
     def get_queryset(self):
@@ -136,7 +140,7 @@ class MembershipSearchView(generics.ListAPIView):
 
 
 class ArticleTagsView(views.APIView):
-    permission_classes = [IsAuthenticatedStrict]
+    permission_classes = [MembershipPublicReadOrAuthenticated]
 
     def get(self, request):
         tags: set[str] = set()
@@ -144,3 +148,22 @@ class ArticleTagsView(views.APIView):
             if isinstance(row, list):
                 tags.update(str(t) for t in row if t)
         return Response(sorted(tags))
+
+
+class ArticlePdfView(APIView):
+    """Serve stored PDF to authenticated members (JWT)."""
+
+    permission_classes = [IsAuthenticatedStrict]
+
+    def get(self, request, pk: int):
+        article = get_object_or_404(Article, pk=pk)
+        if not article.pdf_file:
+            raise Http404()
+        try:
+            fh = article.pdf_file.open("rb")
+        except Exception:
+            raise Http404()
+        name = article.pdf_file.name.rsplit("/", 1)[-1]
+        resp = FileResponse(fh, content_type="application/pdf")
+        resp["Content-Disposition"] = f'inline; filename="{name}"'
+        return resp
